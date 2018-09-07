@@ -1,0 +1,41 @@
+#### C compiler SECTION ####
+# output files
+TCPIP/App/Output/
+
+# MPLAB IDE WORKSPACE
+untitled.mcw
+
+#### VERSION CONTROL SECTION ####
+#ignore files
+.hgignore
+#mercurial folder
+.hg/
+
+#### HARDWARE SECTION ####
+
+#### DOCUMENTS SECTION ####
+
+#### PROJECT CUSTOM SECTION ####
+
+# Compiled source #
+###################
+TCPIP/App/Objects/
+*.o
+*.so
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
