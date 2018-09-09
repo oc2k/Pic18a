@@ -6,7 +6,9 @@ Pic18a1(f67j60)TCPIP__180907a
 
 - //09SEP2018 organize tcpip full version as preparing tcp branch</br>
 	1. Fixed " _DATE_ " for easily check hex file
-	2. add "mcc18" folder directory
+	2. add "mcc18" folder directory see below
+	3. move lkr file to /mcc18/bin/lkr
+	4. add "..\..\mcc18\h" as new "dir_inc" directory change mcp file
   </br>
 		/mcc18</br>
 		//- bin</br>
@@ -16,9 +18,7 @@ Pic18a1(f67j60)TCPIP__180907a
 		///+ traditional</br>
 		////* startup</br>
 		////* stdclib</br>
-	3. move lkr file to /mcc18/bin/lkr
-	4. add "..\..\mcc18\h" as new "dir_inc" directory change mcp file
-
+  </br>
 - //07SEP2018 skel v0,1 -> Pic18a1
 ----
 # skeleton revision
