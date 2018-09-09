@@ -8,7 +8,7 @@ dir_src=
 dir_bin=Output
 dir_tmp=Objects
 dir_sin=
-dir_inc=.\Olimex_Demo_Files;.;..\Microchip\Include;..\..\Microchip\Include
+dir_inc=.\Olimex_Demo_Files;.;..\Microchip\Include;..\..\Microchip\Include;..\..\mcc18\h
 dir_lib=
 dir_lkr=
 [CAT_FILTERS]
@@ -481,7 +481,7 @@ file_108=Olimex_Demo_Files\Custom_SPI_Low.h
 file_109=Olimex_Demo_Files\Custom_UART.h
 file_110=Olimex_Demo_Files\Custom_UART_Low.h
 file_111=Olimex_Demo_Files\Misc_Functions.h
-file_112=18f67j60.lkr
+file_112=C:\Pic18a1\mcc18\bin\LKR\18f67j60.lkr
 file_113=..\..\Microchip\TCPIP Stack\TCPIP Stack Version.txt
 [SUITE_INFO]
 suite_guid={5B7D72DD-9861-47BD-9F60-2BE967BF8416}

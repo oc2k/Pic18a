@@ -7,7 +7,7 @@ untitled.mcw
 
 #### VERSION CONTROL SECTION ####
 #ignore files
-.hgignore
+*.hgignore
 #mercurial folder
 .hg/
 

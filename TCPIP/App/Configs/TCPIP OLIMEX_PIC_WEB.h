@@ -92,7 +92,9 @@
 #define STACK_USE_BERKELEY_API			// Berekely Sockets APIs are available
 //#define STACK_USE_ZEROCONF_LINK_LOCAL	// Zeroconf IPv4 Link-Local Addressing
 //#define STACK_USE_ZEROCONF_MDNS_SD		// Zeroconf mDNS and mDNS service discovery
-
+//
+// -- oc2k define start from here
+#define __fixedAsciiDATE		" 07/09/2018 " 
 
 // =======================================================================
 //   Data Storage Options
