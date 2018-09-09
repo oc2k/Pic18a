@@ -9,7 +9,7 @@ dir_bin=Output
 dir_tmp=Objects
 dir_sin=
 dir_inc=.\Olimex_Demo_Files;.;..\Microchip\Include;..\..\Microchip\Include;..\..\mcc18\h
-dir_lib=
+dir_lib=..\..\mcc18\Objects
 dir_lkr=
 [CAT_FILTERS]
 filter_src=*.c;*.asm

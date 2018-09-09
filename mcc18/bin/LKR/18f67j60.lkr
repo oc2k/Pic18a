@@ -4,7 +4,7 @@
 
 LIBPATH .
 
-FILES c018i.o
+FILES c018oc2k.o
 FILES clib.lib
 FILES p18f67j60.lib
 

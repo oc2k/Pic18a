@@ -1,5 +1,7 @@
 #### C compiler SECTION ####
-# output files
+# c18 generate files
+*.mcs
+TCPIP/App/Objects/
 TCPIP/App/Output/
 
 # MPLAB IDE WORKSPACE
@@ -12,16 +14,8 @@ untitled.mcw
 .hg/
 
 #### HARDWARE SECTION ####
-
 #### DOCUMENTS SECTION ####
-
 #### PROJECT CUSTOM SECTION ####
-
-# Compiled source #
-###################
-TCPIP/App/Objects/
-*.o
-*.so
 
 # Packages #
 ############
