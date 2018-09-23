@@ -96,15 +96,15 @@
 	
 	
 	#if defined(STACK_USE_HTTP2_SERVER) || defined(STACK_USE_FTP_SERVER)
-		#define STACK_USE_MPFS2
+	#warning "noted the MPFS2 no use"	//	#define STACK_USE_MPFS2
 	#endif
 
 	#if defined(STACK_USE_SNMPV3_SERVER) && !defined (STACK_USE_SNMP_SERVER)
-		#define STACK_USE_SNMP_SERVER
+	#warning "noted the SNMP server no defines"	//	#define STACK_USE_SNMP_SERVER
 	#endif
 
 	#if defined(STACK_USE_SNMP_SERVER) //&& !defined(STACK_USE_MPFS) && !defined(STACK_USE_MPFS2)
-		#define STACK_USE_MPFS2
+	#warning "noted the MPFS2 no use"	//	#define STACK_USE_MPFS2
 	#endif
 
 	#if defined(STACK_USE_SNMP_SERVER) && defined (STACK_USE_SNMPV3_SERVER)
@@ -243,13 +243,13 @@
 	// When using SSL server, enable RSA decryption
 	#if defined(STACK_USE_SSL_SERVER)
 		#define STACK_USE_RSA_DECRYPT
-		#define STACK_USE_SSL
+	#warning "no selected SSL on server" //	#define STACK_USE_SSL
 	#endif
 	
 	// When using SSL client, enable RSA encryption
 	#if defined(STACK_USE_SSL_CLIENT)
 		#define STACK_USE_RSA_ENCRYPT
-		#define STACK_USE_SSL
+	#warning "no selected SSL on client" //	#define STACK_USE_SSL
 	#endif
 
 	// If using SSL (either), include the rest of the support modules
@@ -268,7 +268,7 @@
 
 	// Enable the LCD if configured in the hardware profile
 	#if defined(LCD_DATA_IO) || defined(LCD_DATA0_IO)
-		#define USE_LCD
+	#warning "no use LCD as decide"	// #define USE_LCD
 	#endif
 	
 	// SPI Flash MPFS images must start on a block boundary
@@ -316,9 +316,9 @@
 	#include "TCPIP Stack/Hashes.h"
 #endif
 
-	#include "TCPIP Stack/XEEPROM.h"
+//180913a5	#include "TCPIP Stack/XEEPROM.h"
 	#include "TCPIP Stack/SPIFlash.h"
-	#include "TCPIP Stack/SPIRAM.h"
+//180917a	#include "TCPIP Stack/SPIRAM.h"
 
 #if defined(STACK_USE_UDP)
 	#include "TCPIP Stack/UDP.h"
@@ -380,7 +380,7 @@
 
 #if defined(STACK_USE_SNMP_SERVER)
 	#include "TCPIP Stack/SNMP.h"
-	#include "mib.h"
+#error "remove SNMP_SERVER"	//#include "mib.h"
 #endif
 
 #if defined(STACK_USE_NBNS)

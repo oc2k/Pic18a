@@ -7,7 +7,7 @@
 
  *
  *********************************************************************
- * FileName:        MainDemo.c
+ * FileName:        Main.c
  * Dependencies:    TCPIP.h
  * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
  * Compiler:        Microchip C32 v1.11b or higher
@@ -71,7 +71,7 @@
 #endif
 
 // Include functions specific to this stack application
-#include "main.h"
+#include "Main.h"
 #include "Custom_SPI.h"
 
 // Used for Wi-Fi assertions
@@ -371,9 +371,9 @@ int main(void)
         SMTPDemo();
         #endif
         
-        #if defined(STACK_USE_ICMP_CLIENT)
-        PingDemo();
-        #endif
+	    //180920a2    #if defined(STACK_USE_ICMP_CLIENT)
+	    //180920a2    PingDemo();
+	    //180920a2    #endif
 
 		#if defined(STACK_USE_TFTP_CLIENT) && defined(WF_CS_TRIS)	
 		TFTPGetUploadStatus();

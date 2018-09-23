@@ -3,7 +3,7 @@
  *                  Headers for TCPIP Demo App
  *
  *********************************************************************
- * FileName:        main.h
+ * FileName:        Main.h
  * Dependencies:    Compiler.h
  * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
  * Compiler:        Microchip C32 v1.05 or higher
@@ -46,7 +46,7 @@
  *
  * Author               Date    Comment
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * E. Wood				4/26/08 Copied from MainDemo.c
+ * E. Wood				4/26/08 Copied from Main.c
  ********************************************************************/
 #ifndef _MAINDEMO_H
 #define _MAINDEMO_H
@@ -93,7 +93,7 @@ typedef struct
 } NVM_VALIDATION_STRUCT;
 
 
-// An actual function defined in MainDemo.c for displaying the current IP 
+// An actual function defined in Main.c for displaying the current IP 
 // address on the UART and/or LCD.
 void DisplayIPValue(IP_ADDR IPVal);
 

@@ -9,17 +9,49 @@ Pic18a1(f67j60)TCPIP__180923b
 
 #### new tasks
 *
-* new task v: purpose replaced to tcplite branch </br>
+* new task v: blank </br>
 *
 
 ---------------
 ## processing task
-- ...
+- remove list
+
+	| remove defines|remove file|Remark|
+	|---|---|---|
+	| STACK_USE_MPFS2
+	| ~~STACK_USE_ICMP_SERVER~~||**resume**
+	| STACK_USE_HTTP2_SERVER
+	| STACK_USE_DHCP_SERVER
+	| STACK_USE_DHCP_CLIENT
+	| STACK_USE_AUTO_IP
+	| STACK_USE_SMTP_CLIENT
+	| STACK_USE_HTTP_EMAIL_DEMO
+	| STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE
+	| STACK_USE_GENERIC_TCP_SERVER_EXAMPLE
+	| STACK_USE_TELNET_SERVER
+	| STACK_USE_REBOOT_SERVER
+	| STACK_USE_SNTP_CLIENT
+	| STACK_USE_TCP_PERFORMANCE_TEST
+	| STACK_USE_UDP_PERFORMANCE_TEST
+	| STACK_USE_SSL_SERVER
+	|| debug*,StructQueue*,timeDelay*
+	|| BitInt*, RSA*, Random*
+	|| DynDNS*, FTP*, Hashes*, MPFS2*, SPIRAM*, SPIEEPROM*
+	|| PingDemo.c, delay.c, DNSs.c*
+	| STACK_USE_ICMP_SERVER
 
 ---------------
 #### closed task record
+- - copy processing </br>
+- - 180920a2, to remove PingDemo.c </br>
+- - 180920a1, to remove delay.c and DNSs.c </br>
+- - 180918a, update c018i startup code instead of c018oc2k </br>
+- - 180917a remove debug*,StructQueue*,timeDelay*,timer*, DynDNS*, FTP*, Hashes*, MPFS2* and regdef*, SPIRAM* and SPIEEPROM* </br>
+- - 180914a,change maindemo to main (c,h) and remove BitInt* </br>
+- - 180913a,remove smtp* (c,h); DHCP* (c,h) and AutoIP (c,h); HTTP* (c,h); ICMP_SERVER and no deleted is same, thus resume; FileSystem (c,h), MPFS2 (c,h), SNMP (c,h); TFTPc (c,h) -- that is Trivial File Transfer Protocol (TFTP) Client; ENCX24J600 (c,h) and more files </br>
+- - 180912b,remove WF* (c,h) -- "WF_CS_TRIS"; Zeroconf* (c,h); ETHPIC32*.* (pic32 library file); </br>
 - - ... </br>
-
+-
 ----
 >
 > (branch:master)
@@ -44,43 +76,7 @@ Pic18a1(f67j60)TCPIP__180923b
 > (branch:tcplite)
 >
 
-- - 180920a2, to remove PingDemo.c </br>
-- - 180920a1, to remove delay.c and DNSs.c </br>
-- - 180918a, update c018i startup code instead of c018oc2k </br>
-- - 180917a remove debug*,StructQueue*,timeDelay*,timer*, DynDNS*, FTP*, Hashes*, MPFS2* and regdef*, SPIRAM* and SPIEEPROM* </br>
-- - 180914a,change maindemo to main (c,h) and remove BitInt* </br>
-- - 180913a,remove smtp* (c,h); DHCP* (c,h) and AutoIP (c,h); HTTP* (c,h); ICMP_SERVER and no deleted is same, thus resume; FileSystem (c,h), MPFS2 (c,h), SNMP (c,h); TFTPc (c,h) -- that is Trivial File Transfer Protocol (TFTP) Client; ENCX24J600 (c,h) and more files </br>
-- - 180912b,remove WF* (c,h) -- "WF_CS_TRIS"; Zeroconf* (c,h); ETHPIC32*.* (pic32 library file); </br>
-- - ... </br>
--
-##### add c018i startup debug trace* procedure </br>
-- 1, copy c018i.c from mcc18 relevant folder (mcc18\src\traditional\startup\)
-- (2..6)
-- 7, after compile finish, debug trace will be point to "_asm goto _startup _endasm" in _entry of c018oc2k.c file
 
-| remove defines|remove file|Remark|
-|---|---|---|
-| STACK_USE_MPFS2
-| ~~STACK_USE_ICMP_SERVER~~||**resume**
-| STACK_USE_HTTP2_SERVER
-| STACK_USE_DHCP_SERVER
-| STACK_USE_DHCP_CLIENT
-| STACK_USE_AUTO_IP
-| STACK_USE_SMTP_CLIENT
-| STACK_USE_HTTP_EMAIL_DEMO
-| STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE
-| STACK_USE_GENERIC_TCP_SERVER_EXAMPLE
-| STACK_USE_TELNET_SERVER
-| STACK_USE_REBOOT_SERVER
-| STACK_USE_SNTP_CLIENT
-| STACK_USE_TCP_PERFORMANCE_TEST
-| STACK_USE_UDP_PERFORMANCE_TEST
-| STACK_USE_SSL_SERVER
-|| debug*,StructQueue*,timeDelay*
-|| BitInt*, RSA*, Random*
-|| DynDNS*, FTP*, Hashes*, MPFS2*, SPIRAM*, SPIEEPROM*
-|| PingDemo.c, delay.c, DNSs.c*
-| STACK_USE_ICMP_SERVER
 ----
 >
 > (branch:tcp) deleted

@@ -55,7 +55,7 @@
 #if defined(STACK_USE_UART)
 
 #include "TCPIP Stack/TCPIP.h"
-#include "main.h"
+#include "Main.h"
 
 
 #if (defined(MPFS_USE_EEPROM) || defined(MPFS_USE_SPI_FLASH)) && defined(STACK_USE_MPFS2)

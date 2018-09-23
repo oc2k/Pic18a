@@ -53,7 +53,7 @@
 
 #include "Compiler.h"
 
-// Set configuration fuses (but only in MainDemo.c where THIS_IS_STACK_APPLICATION is defined)
+// Set configuration fuses (but only in Main.c where THIS_IS_STACK_APPLICATION is defined)
 #if defined(THIS_IS_STACK_APPLICATION)
 	#pragma config WDT=OFF, FOSC2=ON, FOSC=HSPLL, ETHLED=ON
 
