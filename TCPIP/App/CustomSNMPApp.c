@@ -59,7 +59,7 @@
 #if defined(STACK_USE_SNMP_SERVER)
 
 #include "TCPIP Stack/TCPIP.h"
-#include "MainDemo.h"
+#include "main.h"
 #include "TCPIP Stack/SNMP.h"
 #include "TCPIP Stack/SNMPv3.h"
 

@@ -71,7 +71,7 @@
 #endif
 
 // Include functions specific to this stack application
-#include "MainDemo.h"
+#include "main.h"
 #include "Custom_SPI.h"
 
 // Used for Wi-Fi assertions

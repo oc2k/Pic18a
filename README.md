@@ -8,22 +8,27 @@ Pic18a1(f67j60)TCPIP__180923a
 >
 
 #### new tasks
-- new task v: to remove like ETHPIC32*.* pic32 library and relevant library files </br>
+- new task v: blank </br>
 ---------------
-## processing task Plan
-- task 180923a2: update c018i startup code instead of c018oc2k </br>
+## processing task
+- task 180923a3: change mainDemo to main and remove like ETHPIC32*.* pic32 library and relevant library files </br>
 
-     *
-	 * change output hex filename: Pic18a1(f67j60)master__180923a.hex
-	 * startup file change back to c018i.c and c018i.o
-	 * Fixed DATE: change to 23 Sep 2018
-	 *
+| remove defines|remove file|Remark|
+|---|---|---|
+|| AES*
+|| ArcFOUR*
+|| ETHPIC32*,BigInt_helper_PIC32.S
+|| eth_pic32*
+|| timer*
+|| regdef* [MIPS Quick Tutorial](http://logos.cs.uic.edu/366/notes/mips%20quick%20tutorial.htm)
 
 ---------------
 #### closed task record
+- 180923a2, update c018i startup code instead of c018oc2k </br>
 - 180923a1, back to master and planning </br>
 - - back to master </br>
 - - ... </br>
+
 
 ----
 >
@@ -61,13 +66,10 @@ Pic18a1(f67j60)TCPIP__180923a
 | STACK_USE_SNTP_CLIENT
 | STACK_USE_TCP_PERFORMANCE_TEST
 | STACK_USE_UDP_PERFORMANCE_TEST
-|| AES*
-|| ArcFOUR*
 | STACK_USE_SSL_SERVER
+|| debug*,StructQueue*,timeDelay*
 || BitInt*, RSA*, Random*
-|| debug*,StructQueue*,timeDelay*,timer*
-|| DynDNS*, FTP*, Hashes*, MPFS2*, regdef*, SPIRAM*, SPIEEPROM*
-|| DynDNS*, FTP*, Hashes*, MPFS2*, regdef*, SPIRAM*, SPIEEPROM*
+|| DynDNS*, FTP*, Hashes*, MPFS2*, SPIRAM*, SPIEEPROM*
 || PingDemo.c, delay.c, DNSs.c*
 | STACK_USE_ICMP_SERVER
 ----

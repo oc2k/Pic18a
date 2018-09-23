@@ -56,7 +56,7 @@
 #include "TCPIPConfig.h"
 
 #if defined(EZ_CONFIG_STORE)
-#include "MainDemo.h"
+#include "main.h"
 #endif
 
 typedef struct

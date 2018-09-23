@@ -3,7 +3,7 @@
  *                  Headers for TCPIP Demo App
  *
  *********************************************************************
- * FileName:        MainDemo.h
+ * FileName:        main.h
  * Dependencies:    Compiler.h
  * Processor:       PIC18, PIC24F, PIC24H, dsPIC30F, dsPIC33F, PIC32
  * Compiler:        Microchip C32 v1.05 or higher
