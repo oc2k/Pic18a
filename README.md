@@ -9,6 +9,9 @@ Pic18a1(f67j60)TCPIP__180923a
 
 #### new tasks
 - new task v: to remove like ETHPIC32*.* pic32 library and relevant library files </br>
+---------------
+## processing task Plan
+- task 180923a2: update c018i startup code instead of c018oc2k </br>
 
      *
 	 * change output hex filename: Pic18a1(f67j60)master__180923a.hex
@@ -16,9 +19,6 @@ Pic18a1(f67j60)TCPIP__180923a
 	 * Fixed DATE: change to 23 Sep 2018
 	 *
 
----------------
-## processing task Plan
-- task 180923a2: update c018i startup code instead of c018oc2k </br>
 ---------------
 #### closed task record
 - 180923a1, back to master and planning </br>
