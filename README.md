@@ -1,17 +1,34 @@
-Pic18a1(f67j60)TCPIP__180923a
+Pic18a1(f67j60)TCPIP__180923b
 ====
 ##### recoder (TOP LATEST)
+
+----
+>
+> (branch:light) 
+>
+
+#### new tasks
+*
+* new task v: purpose replaced to tcplite branch </br>
+*
+
+---------------
+## processing task
+- ...
+
+---------------
+#### closed task record
+- - ... </br>
 
 ----
 >
 > (branch:master)
 >
 
-#### new tasks
-- new task v: blank </br>
----------------
-## processing task
-- task 180923a3: change mainDemo to main and remove like ETHPIC32*.* pic32 library and relevant library files </br>
+- - 180923a3: change mainDemo to main and remove like ETHPIC32*.* pic32 library and relevant library files </br>
+- - 180923a2, update c018i startup code instead of c018oc2k </br>
+- - 180923a1, back to master and planning </br>
+- - back to master </br>
 
 | remove defines|remove file|Remark|
 |---|---|---|
@@ -21,14 +38,6 @@ Pic18a1(f67j60)TCPIP__180923a
 || eth_pic32*
 || timer*
 || regdef* [MIPS Quick Tutorial](http://logos.cs.uic.edu/366/notes/mips%20quick%20tutorial.htm)
-
----------------
-#### closed task record
-- 180923a2, update c018i startup code instead of c018oc2k </br>
-- 180923a1, back to master and planning </br>
-- - back to master </br>
-- - ... </br>
-
 
 ----
 >
