@@ -94,7 +94,7 @@
 //#define STACK_USE_ZEROCONF_MDNS_SD		// Zeroconf mDNS and mDNS service discovery
 //
 // -- oc2k define start from here
-#define __fixedAsciiDATE		" 07/09/2018 " 
+#define __fixedAsciiDATE		"23 Sep 2018" //" 23/09/2018 " 
 
 // =======================================================================
 //   Data Storage Options

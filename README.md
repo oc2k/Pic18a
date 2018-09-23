@@ -1,6 +1,6 @@
 Pic18a1(f67j60)TCPIP__180923a
 ====
-# recoder (TOP LATEST)
+##### recoder (TOP LATEST)
 
 ----
 >
@@ -8,13 +8,20 @@ Pic18a1(f67j60)TCPIP__180923a
 >
 
 #### new tasks
-- new task v: update c018i startup code instead of c018oc2k </br>
+- new task v: to remove like ETHPIC32*.* pic32 library and relevant library files </br>
+
+     *
+	 * change output hex filename: Pic18a1(f67j60)master__180923a.hex
+	 * startup file change back to c018i.c and c018i.o
+	 * Fixed DATE: change to 23 Sep 2018
+	 *
 
 ---------------
 ## processing task Plan
-- task: 180923a1, back to master and planning </br>
+- task 180923a2: update c018i startup code instead of c018oc2k </br>
 ---------------
 #### closed task record
+- 180923a1, back to master and planning </br>
 - - back to master </br>
 - - ... </br>
 
@@ -71,6 +78,18 @@ Pic18a1(f67j60)TCPIP__180923a
 ----
 >
 > (branch:master)
+>
+
+----
+- *add c018 startup debug trace* procedure </br>
+	1. copy c018i.c from mcc18 relevant folder (mcc18\src\traditional\startup\)
+	2. add the file to mcp project
+	3. right click and select compiler
+	4. copy "c018i.o" file from output Objects folder into "mcc18\Objects"
+	5. remove c018i.c from mcp project
+	6. add library new search parts, the mcp file would be change to "dir_lib=..\..\mcc18\Objects"
+	7. build all
+-	*effect*: after build all, debug trace will be point to "_asm goto _startup _endasm" in _entry of c018i.c file
 >
 - //09SEP2018a organize tcpip full version as preparing tcp branch</br>
 	1. Fixed " __DATE__ " for easily check hex file (note: no change actually)

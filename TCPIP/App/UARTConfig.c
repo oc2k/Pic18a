@@ -74,7 +74,7 @@ void DoUARTConfig(void)
 	while(!bQuit)
 	{
 		// Display the menu
-	    putrsUART("\r\n\r\n\rMicrochip TCP/IP Config Application ("TCPIP_STACK_VERSION", " __DATE__ ")\r\n\r\n"); //__fixedAsciiDATE instead of " __DATE__ "
+	    putrsUART("\r\n\r\n\rMicrochip TCP/IP Config Application ("TCPIP_STACK_VERSION", " __fixedAsciiDATE ")\r\n\r\n"); //__fixedAsciiDATE instead of " __DATE__ "
 	    putrsUART("\t1: Change serial number:\t\t");
 		wvTemp.v[1] = AppConfig.MyMACAddr.v[4];
 		wvTemp.v[0] = AppConfig.MyMACAddr.v[5];

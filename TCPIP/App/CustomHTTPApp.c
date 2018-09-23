@@ -1779,11 +1779,11 @@ static HTTP_IO_RESULT HTTPPostDDNSConfig(void)
 void HTTPPrint_builddate(void)
 {
     curHTTP.callbackPos = 0x01;
-    if(TCPIsPutReady(sktHTTP) < strlenpgm((ROM char*)__DATE__" ""00:08:00"))
+    if(TCPIsPutReady(sktHTTP) < strlenpgm((ROM char*)__fixedAsciiDATE" ""00:08:00"))
         return;
  
     curHTTP.callbackPos = 0x00;
-    TCPPutROMString(sktHTTP, (ROM void*)__DATE__" ""00:08:00");
+    TCPPutROMString(sktHTTP, (ROM void*)__fixedAsciiDATE" ""00:08:00");
 }
 
 void HTTPPrint_version(void)
