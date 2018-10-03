@@ -14,12 +14,19 @@ Pic18a1(f67j60)TCPIP__180923b
 
 ---------------
 ## processing task
-- remove list
-
-	| remove defines|remove file|Remark|
+- 181001a4, remove __C32**,__PIC24**,__PIC32
+- 181001a3, remove __C30**
+- 181001a2, remove HI_TECH_C
+- 181001a1, remove "CFG_INCLUDE_PICDN2_ETH97" in mcp, output hex file no change
+- permanent remove list
+- -
+	| remove macro|status|Remark|
 	|---|---|---|
+	| __C32*|Processed|exclude compiler.h
+	| __PIC24*|Processed|exclude compiler.h
+	| __PIC32*|Processed|exclude compiler.h
+	| __dsPIC33*|Processed|exclude compiler.h
 	| STACK_USE_MPFS2
-	| ~~STACK_USE_ICMP_SERVER~~||**resume**
 	| STACK_USE_HTTP2_SERVER
 	| STACK_USE_DHCP_SERVER
 	| STACK_USE_DHCP_CLIENT
@@ -34,10 +41,6 @@ Pic18a1(f67j60)TCPIP__180923b
 	| STACK_USE_TCP_PERFORMANCE_TEST
 	| STACK_USE_UDP_PERFORMANCE_TEST
 	| STACK_USE_SSL_SERVER
-	|| debug*,StructQueue*,timeDelay*
-	|| BitInt*, RSA*, Random*
-	|| DynDNS*, FTP*, Hashes*, MPFS2*, SPIRAM*, SPIEEPROM*
-	|| PingDemo.c, delay.c, DNSs.c*
 	| STACK_USE_ICMP_SERVER
 
 ---------------

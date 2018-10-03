@@ -54,7 +54,6 @@
 #include "HardwareProfile.h"
 
 
-#if defined(__18CXX)	// PIC18
 	char BusyUSART(void);
 	void CloseUSART(void);
 	char DataRdyUSART(void);
@@ -63,18 +62,6 @@
 	void getsUSART(char *buffer, unsigned char len);
 	void putsUSART(char *data);
 	void putrsUSART(const rom char *data);
-#elif defined(__C30__) // PIC24F, PIC24H, dsPIC30, dsPIC33
-	void putsUART2(unsigned int *buffer);
-	#define putrsUART2(x) putsUART2( (unsigned int *)x)
-	unsigned int getsUART2(unsigned int length,unsigned int *buffer,
-	                       unsigned int uart_data_wait);
-	char DataRdyUART2(void);
-	char BusyUART2(void);
-	unsigned int ReadUART2(void);
-	void WriteUART2(unsigned int data);
-#elif defined( __PIC32MX__ )
-    #define putrsUART2(x) putsUART2(x)
-#endif
 
 
 #endif

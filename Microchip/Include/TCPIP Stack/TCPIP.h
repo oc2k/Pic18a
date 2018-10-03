@@ -214,13 +214,9 @@
 	// where to locate it and prevents other variables from 
 	// overlapping with it
 	#if defined(__TCP_C) && TCP_PIC_RAM_SIZE > 0u
-		#if defined(__18CXX) && !defined(HI_TECH_C)
 			#pragma udata TCPSocketMemory
-		#endif
 		static BYTE TCPBufferInPIC[TCP_PIC_RAM_SIZE] __attribute__((far));
-		#if defined(__18CXX) && !defined(HI_TECH_C)
 			#pragma udata
-		#endif
 	#endif
 	
 	// Make sure that STACK_USE_UDP is defined if a service 
@@ -316,9 +312,9 @@
 	#include "TCPIP Stack/Hashes.h"
 #endif
 
-//180913a5	#include "TCPIP Stack/XEEPROM.h"
+//	#include "TCPIP Stack/XEEPROM.h"
 	#include "TCPIP Stack/SPIFlash.h"
-//180917a	#include "TCPIP Stack/SPIRAM.h"
+//	#include "TCPIP Stack/SPIRAM.h"
 
 #if defined(STACK_USE_UDP)
 	#include "TCPIP Stack/UDP.h"

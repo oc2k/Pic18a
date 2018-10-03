@@ -114,14 +114,6 @@ static WORD wTXWatchdog;	// Time of last transmission (high resolution); used fo
 	static WORD wRXPolarityTimer;	// Time of last transmission (long duration); used for determining when a RX polarity swap may be needed
 #endif
 
-#if defined(HI_TECH_C)
-	// Define a temporary register for passing data to inline assembly 
-	// statements.  MPLAB C18 uses PRODL and therefore doesn't need this temp 
-	// byte, but the HI-TECH PICC-18 compiler uses PRODL differently and doesn't 
-	// allow it to be used as a temporary byte.
-	static unsigned char errataTempL @ 0xE7E;	// Six least significant address bits must not be '110110' for Ethernet MIIM Errata workaround (issue #5).
-	static unsigned char errataTempH @ 0xE7F;	// Six least significant address bits must not be '110110' for Ethernet MIIM Errata workaround (issue #5).
-#endif
 
 
 /******************************************************************************
@@ -1078,12 +1070,7 @@ BOOL MACIsMemCopyDone(void)
  *****************************************************************************/
 BYTE MACGet()
 {
-	#if defined(HI_TECH_C)
-		asm("movff	0xF61, _errataTempL");	// movff EDATA, errataTempL
-		return errataTempL;
-	#else
 		return EDATA;
-	#endif
 }//end MACGet
 
 
@@ -1114,27 +1101,16 @@ WORD MACGetArray(BYTE *val, WORD len)
 	{
 	    while(w--)
 	    {
-			#if defined(HI_TECH_C)
-				asm("movff	0xF61, _errataTempL");	// movff EDATA, errataTempL
-				*val++ = errataTempL;
-			#else
 				*val++ = EDATA;
-			#endif
 	    }
 	}
 	else
 	{
 		while(w--)
 		{
-			#if defined(HI_TECH_C)
-			{
-				asm("movff	0xF61, _errataTempL");	// movff EDATA, errataTempL
-			}
-			#else
 			{	
 				volatile BYTE i = EDATA;
 			}
-			#endif
 		}
 	}
 
@@ -1163,13 +1139,8 @@ void MACPut(BYTE val)
 	// Note:  Due to a PIC18F97J60 bug, you must use the MOVFF instruction to
 	// write to EDATA or else the read pointer (ERDPT) will inadvertently
 	// increment.
-	#if defined(HI_TECH_C)
-		errataTempL = val;
-		asm("movff	_errataTempL, 0xF61");	// movff errataTempL, EDATA
-	#else
 		PRODL = val;
 		_asm movff	PRODL, EDATA _endasm
-	#endif
 }//end MACPut
 
 
@@ -1198,13 +1169,8 @@ void MACPutArray(BYTE *val, WORD len)
 		// Note:  Due to a PIC18F97J60 bug, you must use the MOVFF instruction to
 		// write to EDATA or else the read pointer (ERDPT) will inadvertently
 		// increment.
-		#if defined(HI_TECH_C)
-			errataTempL = *val++;
-			asm("movff	_errataTempL, 0xF61");	// movff errataTempL, EDATA
-		#else
 			PRODL = *val++;
 			_asm movff	PRODL, EDATA _endasm
-		#endif
 	}
 }//end MACPutArray
 
@@ -1215,13 +1181,8 @@ void MACPutROMArray(ROM BYTE *val, WORD len)
 		// Note:  Due to a PIC18F97J60 bug, you must use the MOVFF instruction to
 		// write to EDATA or else the read pointer (ERDPT) will inadvertently
 		// increment.
-		#if defined(HI_TECH_C)
-			errataTempL = *val++;
-			asm("movff	_errataTempL, 0xF61");	// movff errataTempL, EDATA
-		#else
 			PRODL = *val++;
 			_asm movff	PRODL, EDATA _endasm
-		#endif
 	}
 }//end MACPutROMArray
 
@@ -1302,15 +1263,7 @@ void WritePHYReg(BYTE Register, WORD Data)
 	// 0xFF4:0xFF3.  These addresses have LSb address bits of 0x14 and 0x13.
 	// Interrupts must be disabled to prevent arbitrary ISR code from accessing
 	// memory with LSb bits of 0x16 and corrupting the MIWRL value.
-	#if defined(HI_TECH_C)
-		errataTempL = ((BYTE*)&Data)[0];
-		errataTempH = ((BYTE*)&Data)[1];
-		GIESave = INTCON & 0xC0;		// Save GIEH and GIEL bits
-		INTCON &= 0x3F;					// Clear INTCONbits.GIEH and INTCONbits.GIEL
-		asm("movff	_errataTempL, 0xEB6");	// movff errataTempL, MIWRL
-		asm("nop");
-		asm("movff	_errataTempH, 0xEB7");	// movff errataTempH, MIWRH
-	#else
+
 		PRODL = ((BYTE*)&Data)[0];
 		PRODH = ((BYTE*)&Data)[1];
 		GIESave = INTCON & 0xC0;		// Save GIEH and GIEL bits
@@ -1320,12 +1273,12 @@ void WritePHYReg(BYTE Register, WORD Data)
 		nop
 		movff	PRODH, MIWRH
 		_endasm
-	#endif
+
 	INTCON |= GIESave;				// Restore GIEH and GIEL value
 
 	// Wait until the PHY register has been written
 	// This operation requires 10.24us
-    while(MISTATbits.BUSY);
+    while(MISTATbits.BUSY); // (BP)
 }//end WritePHYReg
 
 

@@ -71,24 +71,24 @@ typedef BYTE TCP_SOCKET;
 // TCP States as defined by RFC 793
 typedef enum
 {
-	TCP_GET_DNS_MODULE,		// Special state for TCP client mode sockets
-	TCP_DNS_RESOLVE,		// Special state for TCP client mode sockets
-	TCP_GATEWAY_SEND_ARP,	// Special state for TCP client mode sockets
-	TCP_GATEWAY_GET_ARP,	// Special state for TCP client mode sockets
+	TCP_GET_DNS_MODULE,		// 0, Special state for TCP client mode sockets
+	TCP_DNS_RESOLVE,		// 1, Special state for TCP client mode sockets
+	TCP_GATEWAY_SEND_ARP,	// 2, Special state for TCP client mode sockets
+	TCP_GATEWAY_GET_ARP,	// 3, Special state for TCP client mode sockets
 
-    TCP_LISTEN,				// Socket is listening for connections
-    TCP_SYN_SENT,			// A SYN has been sent, awaiting an SYN+ACK
-    TCP_SYN_RECEIVED,		// A SYN has been received, awaiting an ACK
-    TCP_ESTABLISHED,		// Socket is connected and connection is established
-    TCP_FIN_WAIT_1,			// FIN WAIT state 1
-    TCP_FIN_WAIT_2,			// FIN WAIT state 2
-    TCP_CLOSING,			// Socket is closing
+    TCP_LISTEN,				// 4, Socket is listening for connections
+    TCP_SYN_SENT,			// 5, A SYN has been sent, awaiting an SYN+ACK
+    TCP_SYN_RECEIVED,		// 6, A SYN has been received, awaiting an ACK
+    TCP_ESTABLISHED,		// 7, Socket is connected and connection is established
+    TCP_FIN_WAIT_1,			// 8, FIN WAIT state 1
+    TCP_FIN_WAIT_2,			// 9, FIN WAIT state 2
+    TCP_CLOSING,			// A, Socket is closing
 //	TCP_TIME_WAIT, state is not implemented
-	TCP_CLOSE_WAIT,			// Waiting to close the socket
-    TCP_LAST_ACK,			// The final ACK has been sent
-    TCP_CLOSED,				// Socket is idle and unallocated
+	TCP_CLOSE_WAIT,			// B, Waiting to close the socket
+    TCP_LAST_ACK,			// C, The final ACK has been sent
+    TCP_CLOSED,				// D, Socket is idle and unallocated
 
-    TCP_CLOSED_BUT_RESERVED	// Special state for TCP client mode sockets.  Socket is idle, but still allocated pending application closure of the handle.
+    TCP_CLOSED_BUT_RESERVED	// E, Special state for TCP client mode sockets.  Socket is idle, but still allocated pending application closure of the handle.
 } TCP_STATE;
 
 typedef enum
@@ -108,21 +108,21 @@ typedef enum
 // Current size is 34 bytes (PIC18), 36 bytes (PIC24/dsPIC), or 56 (PIC32)
 typedef struct
 {
-	PTR_BASE bufferTxStart;		// First byte of TX buffer
-	PTR_BASE bufferRxStart;		// First byte of RX buffer.  TX buffer ends 1 byte prior
-	PTR_BASE bufferEnd;			// Last byte of RX buffer
-	PTR_BASE txHead;			// Head pointer for TX
-	PTR_BASE txTail;			// Tail pointer for TX
-	PTR_BASE rxHead;			// Head pointer for RX
-	PTR_BASE rxTail;			// Tail pointer for RX
-    DWORD eventTime;			// Packet retransmissions, state changes
-	WORD eventTime2;			// Window updates, automatic transmission
+	PTR_BASE bufferTxStart;		// 1(2) First byte of TX buffer
+	PTR_BASE bufferRxStart;		// 2(2) First byte of RX buffer.  TX buffer ends 1 byte prior
+	PTR_BASE bufferEnd;			// 3(2) Last byte of RX buffer
+	PTR_BASE txHead;			// 4(2) Head pointer for TX
+	PTR_BASE txTail;			// 5(2) Tail pointer for TX
+	PTR_BASE rxHead;			// 6(2) Head pointer for RX
+	PTR_BASE rxTail;			// 7(2) Tail pointer for RX
+    DWORD eventTime;			// 8(4) Packet retransmissions, state changes
+	WORD eventTime2;			// 9(2) Window updates, automatic transmission
 	union
 	{
 		WORD delayedACKTime;	// Delayed Acknowledgement timer
 		WORD closeWaitTime;		// TCP_CLOSE_WAIT timeout timer
-	} OverlappedTimers;
-    TCP_STATE smState;			// State of this socket
+	} OverlappedTimers; 		// 10(2)
+    TCP_STATE smState;			// 11(1) State of this socket
     struct
     {
 	    unsigned char vUnackedKeepalives : 3;		// Count of how many keepalives have been sent with no response
@@ -138,8 +138,8 @@ typedef struct
 		unsigned char bSocketReset : 1;				// Socket has been reset (self-clearing semaphore)
 		unsigned char bSSLHandshaking : 1;			// Socket is in an SSL handshake
 		unsigned char filler : 2;					// Future expansion
-    } Flags;
-	WORD_VAL remoteHash;	// Consists of remoteIP, remotePort, localPort for connected sockets.  It is a localPort number only for listening server sockets.
+    } Flags; // 12(2)
+	WORD_VAL remoteHash;	// 13(2) Consists of remoteIP, remotePort, localPort for connected sockets.  It is a localPort number only for listening server sockets.
 
     #if defined(STACK_USE_SSL)
     PTR_BASE sslTxHead;		// Position of data being written in next SSL application record
@@ -149,29 +149,29 @@ typedef struct
     BYTE sslReqMessage;		// Currently requested SSL message
     #endif
 
-	BYTE vMemoryMedium;		// Which memory medium the TCB is actually stored
+	BYTE vMemoryMedium;		// 14(1) Which memory medium the TCB is actually stored
 	
-} TCB_STUB;
+} TCB_STUB; // total is 28 (1Ch) __/ie: 8x2+4 +(2+1)+(2+2+1) = 20+8 = 28
 
 // Remainder of TCP Control Block data.
 // The rest of the TCB is stored in Ethernet buffer RAM or elsewhere as defined by vMemoryMedium.
 // Current size is 41 (PIC18), 42 (PIC24/dsPIC), or 48 bytes (PIC32)
 typedef struct
 {
-	DWORD		retryInterval;			// How long to wait before retrying transmission
-	DWORD		MySEQ;					// Local sequence number
-	DWORD		RemoteSEQ;				// Remote sequence number
-	PTR_BASE	txUnackedTail;			// TX tail pointer for data that is not yet acked
-    WORD_VAL	remotePort;				// Remote port number
-    WORD_VAL	localPort;				// Local port number
-	WORD		remoteWindow;			// Remote window size
-	WORD		wFutureDataSize;		// How much out-of-order data has been received
+	DWORD		retryInterval;			// 1(4) How long to wait before retrying transmission
+	DWORD		MySEQ;					// 2(4) Local sequence number
+	DWORD		RemoteSEQ;				// 3(4) Remote sequence number
+	PTR_BASE	txUnackedTail;			// _12..___(2) TX tail pointer for data that is not yet acked
+    WORD_VAL	remotePort;				// 4(4) Remote port number
+    WORD_VAL	localPort;				// 5(4) Local port number
+	WORD		remoteWindow;			// 6(4) Remote window size
+	WORD		wFutureDataSize;		// 7(4) How much out-of-order data has been received
 	union
 	{
 		NODE_INFO	niRemoteMACIP;		// 10 bytes for MAC and IP address
 		DWORD		dwRemoteHost;		// RAM or ROM pointer to a hostname string (ex: "www.microchip.com")
-	} remote;
-	SHORT		sHoleSize;				// Size of the hole, or -1 for none exists.  (0 indicates hole has just been filled)
+	} remote;							// _(4)
+	SHORT		sHoleSize;				// _..34___(2) Size of the hole, or -1 for none exists.  (0 indicates hole has just been filled)
     struct
     {
         unsigned char bFINSent : 1;		// A FIN has been sent
@@ -180,14 +180,14 @@ typedef struct
 		unsigned char bRXNoneACKed1 : 1;	// A duplicate ACK was likely received
 		unsigned char bRXNoneACKed2 : 1;	// A second duplicate ACK was likely received
 		unsigned char filler : 3;		// future use
-    } flags;
-	WORD		wRemoteMSS;				// Maximum Segment Size option advirtised by the remote node during initial handshaking
+    } flags;							// _..5___(1) 
+	WORD		wRemoteMSS;				// 8(4) Maximum Segment Size option advirtised by the remote node during initial handshaking
     #if defined(STACK_USE_SSL)
-    WORD_VAL	localSSLPort;			// Local SSL port number (for listening sockets)
+    WORD_VAL	localSSLPort;			// _x_(4) Local SSL port number (for listening sockets)
     #endif
-	BYTE		retryCount;				// Counter for transmission retries
-	BYTE		vSocketPurpose;			// Purpose of socket (as defined in TCPIPConfig.h)
-} TCB;
+	BYTE		retryCount;				// _..6___(1) Counter for transmission retries
+	BYTE		vSocketPurpose;			// _..7___(1) Purpose of socket (as defined in TCPIPConfig.h)
+} TCB;					// total is 4x8 + 7 = 39 (27h)
 
 // Information about a socket
 typedef struct
@@ -253,6 +253,7 @@ void TCPFlush(TCP_SOCKET hTCP);
 	#define TCP_OPEN_NODE_INFO	You_need_to_enable_STACK_CLIENT_MODE_to_use_TCP_OPEN_NODE_INFO
 #endif
 TCP_SOCKET TCPOpen(DWORD dwRemoteHost, BYTE vRemoteHostType, WORD wPort, BYTE vSocketPurpose);
+//TCP_SOCKET TCPOpen__UartSPY(DWORD dwRemoteHost, BYTE vRemoteHostType, WORD wPort, BYTE vSocketPurpose);
 
 #if defined(__18CXX)
 	WORD TCPFindROMArrayEx(TCP_SOCKET hTCP, ROM BYTE* cFindArray, WORD wLen, WORD wStart, WORD wSearchLen, BOOL bTextCompare);
@@ -273,7 +274,7 @@ TCP_SOCKET TCPOpen(DWORD dwRemoteHost, BYTE vRemoteHostType, WORD wPort, BYTE vS
 	#define TCPFindROMArray(a,b,c,d,e) 		TCPFindArray(a,(BYTE*)b,c,d,e)
 	#define TCPFindROMArrayEx(a,b,c,d,e,f) 	TCPFindArrayEx(a,(BYTE*)b,c,d,e,f)
 	#define TCPPutROMArray(a,b,c)			TCPPutArray(a,(BYTE*)b,c)
-	#define TCPPutROMString(a,b)			TCPPutString(a,(BYTE*)b)
+#DetectForError:	#define TCPPutROMString(a,b)			TCPPutString(a,(BYTE*)b)
 #endif
 
 WORD TCPGetTxFIFOFull(TCP_SOCKET hTCP);

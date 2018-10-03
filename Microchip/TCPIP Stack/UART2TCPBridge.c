@@ -106,7 +106,6 @@ static volatile BYTE *TXHeadPtr = vUARTTXFIFO, *TXTailPtr = vUARTTXFIFO;
 void UART2TCPBridgeInit(void)
 {
 	// Initilize UART
-#if defined(__18CXX)
     TXSTA = 0x20;
     RCSTA = 0x90;
 
@@ -137,32 +136,7 @@ void UART2TCPBridgeInit(void)
 	// Use high priority interrupt
 	IPR1bits.TXIP = 1;
 
-#else
-	UARTTX_TRIS = 0;
-	UARTRX_TRIS = 1;
-	UMODE = 0x8000;			// Set UARTEN.  Note: this must be done before setting UTXEN
 
-	#if defined(__C30__)
-		USTA = 0x0400;		// UTXEN set
-		#define CLOSEST_UBRG_VALUE ((GetPeripheralClock()+8ul*BAUD_RATE)/16/BAUD_RATE-1)
-		#define BAUD_ACTUAL (GetPeripheralClock()/16/(CLOSEST_UBRG_VALUE+1))
-	#else	//defined(__C32__)
-		IPC8bits.U2IP = 6;		// Priority level 6
-		USTA = 0x00001400;		// RXEN set, TXEN set
-		#define CLOSEST_UBRG_VALUE ((GetPeripheralClock()+8ul*BAUD_RATE)/16/BAUD_RATE-1)
-		#define BAUD_ACTUAL (GetPeripheralClock()/16/(CLOSEST_UBRG_VALUE+1))
-	#endif
-
-	#define BAUD_ERROR ((BAUD_ACTUAL > BAUD_RATE) ? BAUD_ACTUAL-BAUD_RATE : BAUD_RATE-BAUD_ACTUAL)
-	#define BAUD_ERROR_PRECENT	((BAUD_ERROR*100+BAUD_RATE/2)/BAUD_RATE)
-	#if (BAUD_ERROR_PRECENT > 3)
-		#warning UART frequency error is worse than 3%
-	#elif (BAUD_ERROR_PRECENT > 2)
-		#warning UART frequency error is worse than 2%
-	#endif
-
-	UBRG = CLOSEST_UBRG_VALUE;
-#endif
 
 }
 
@@ -365,7 +339,6 @@ void UART2TCPBridgeTask(void)
 }
 
 
-#if defined(__18CXX)
 /*********************************************************************
  * Function:        void UART2TCPBridgeISR(void)
  *
@@ -424,106 +397,7 @@ void UART2TCPBridgeISR(void)
 	}
 }
 
-#else
-/*********************************************************************
- * Function:        void _ISR _U2RXInterrupt(void)
- *
- * PreCondition:    None
- *
- * Input:           None
- *
- * Output:          None
- *
- * Side Effects:    None
- *
- * Overview:        Copies bytes to and from the local UART TX and 
- *					RX FIFOs
- *
- * Note:            None
- ********************************************************************/
-#if __C30_VERSION__ >= 300
-void _ISR __attribute__((__no_auto_psv__)) _U2RXInterrupt(void)
-#elif defined(__C30__)
-void _ISR _U2RXInterrupt(void)
-#else
-void _U2RXInterrupt(void)
-#endif
-{
-	BYTE i;
 
-	// Store a received byte, if pending, if possible
-	// Get the byte
-	i = U2RXREG;
-	
-	// Clear the interrupt flag so we don't keep entering this ISR
-	IFS1bits.U2RXIF = 0;
-	
-	// Copy the byte into the local FIFO, if it won't cause an overflow
-	if(RXHeadPtr != RXTailPtr - 1)
-	{
-		if((RXHeadPtr != vUARTRXFIFO + sizeof(vUARTRXFIFO)) || (RXTailPtr != vUARTRXFIFO))
-		{
-			*RXHeadPtr++ = i;
-			if(RXHeadPtr >= vUARTRXFIFO + sizeof(vUARTRXFIFO))
-				RXHeadPtr = vUARTRXFIFO;
-		}
-	}
-}
-/*********************************************************************
- * Function:        void _ISR _U2TXInterrupt(void)
- *
- * PreCondition:    None
- *
- * Input:           None
- *
- * Output:          None
- *
- * Side Effects:    None
- *
- * Overview:        Copies bytes to and from the local UART TX and 
- *					RX FIFOs
- *
- * Note:            None
- ********************************************************************/
-#if __C30_VERSION__ >= 300
-void _ISR __attribute__((__no_auto_psv__)) _U2TXInterrupt(void)
-#elif defined(__C30__)
-void _ISR _U2TXInterrupt(void)
-#else
-void _U2TXInterrupt(void)
-#endif
-{
-	// Transmit a byte, if pending, if possible
-	if(TXHeadPtr != TXTailPtr)
-	{
-		// Clear the TX interrupt flag before transmitting again
-		IFS1bits.U2TXIF = 0;
-
-		U2TXREG = *TXTailPtr++;
-		if(TXTailPtr >= vUARTTXFIFO + sizeof(vUARTTXFIFO))
-			TXTailPtr = vUARTTXFIFO;
-	}
-	else	// Disable the TX interrupt if we are done so that we don't keep entering this ISR
-	{
-		IEC1bits.U2TXIE = 0;
-	}
-}
-
-
-#if defined(__C32__)
-void __attribute((interrupt(ipl6), vector(_UART2_VECTOR), nomips16)) U2Interrupt(void)
-{
-	if(IFS1bits.U2RXIF)
-		_U2RXInterrupt();
-	if(IEC1bits.U2TXIE)
-	{
-		if(IFS1bits.U2TXIF)
-			_U2TXInterrupt();
-	}
-}
-#endif
-
-#endif	// end of ISRs
 
 
 #endif	//#if defined(STACK_USE_UART2TCP_BRIDGE)

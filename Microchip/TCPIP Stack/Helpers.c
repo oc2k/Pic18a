@@ -220,7 +220,6 @@ DWORD GenerateRandomDWORD(void)
 		WORD	w[2];
 	} randomResult;
 
-#if defined __18CXX	
 {
 	BYTE ADCON0Save, ADCON2Save;
 	BYTE T0CONSave, TMR0HSave, TMR0LSave;
@@ -286,84 +285,7 @@ DWORD GenerateRandomDWORD(void)
 	TMR0L = TMR0LSave;
 	T0CON = T0CONSave;
 }
-#else
-{
-	WORD AD1CON1Save, AD1CON2Save, AD1CON3Save;
-	WORD T1CONSave, PR1Save;
 
-	// Save hardware SFRs
-	AD1CON1Save = AD1CON1;
-	AD1CON2Save = AD1CON2;
-	AD1CON3Save = AD1CON3;
-	T1CONSave = T1CON;
-	PR1Save = PR1;
-
-	// Set up Timer and A/D converter module
-	AD1CON1 = 0x0000;		// Turn off the ADC so we can write to it
-	AD1CON3 = 0x9F00;		// Frc A/D clock, 31 Tad acquisition
-	AD1CON2 = 0x003F;		// Interrupt after every 16th sample/convert
-	AD1CON1 = 0x80E4;		// Turn on the A/D module, auto-convert
-	T1CON = 0x8000;			// TON = 1, no prescalar
-	PR1 = 0xFFFF;			// Don't clear timer early
-	vBitCount = 0;
-	dwTotalTime = 0;
-	wLastValue = 0;
-	randomResult.dw = LFSRRand();
-	while(1)
-	{
-		ClrWdt();
-		#if defined(__C30__)
-			while(!IFS0bits.AD1IF);
-		#else
-			while(!IFS1bits.AD1IF);
-		#endif
-		wTime = TMR1;
-		TMR1 = 0x0000;
-
-		#if defined(__C30__)
-			IFS0bits.AD1IF = 0;
-		#else
-			IFS1CLR = _IFS1_AD1IF_MASK;
-		#endif
-		w = LFSRRand();
-	
-		// Wait no longer than 1 second obtaining entropy
-		dwTotalTime += wTime;
-		if(dwTotalTime >= GetInstructionClock())
-		{
-			randomResult.w[0] ^= LFSRRand();
-			randomResult.w[1] ^= LFSRRand();
-			break;
-		}
-	
-		// Keep sampling if minimal entropy was likely obtained this round
-		if(wLastValue == wTime)
-			continue;
-	
-		// Add this entropy into the pseudo random number generator by reseeding
-		LFSRSeedRand(w + (wLastValue - wTime));
-		wLastValue = wTime;
-	
-		// Accumulate at least 32 bits of randomness over time
-		randomResult.dw <<= 1;
-		if(LFSRRand() & 0x0080)
-			randomResult.w[0] |= 0x1;
-	
-		// See if we've collected a fair amount of entropy and can quit early
-		if(++vBitCount == 0u)
-			break;
-	}
-
-
-	// Restore hardware SFRs
-	AD1CON1 = 0x0000;		// Turn off the ADC so we can write to it
-	AD1CON3 = AD1CON3Save;
-	AD1CON2 = AD1CON2Save;
-	AD1CON1 = AD1CON1Save;
-	T1CON = T1CONSave;
-	PR1 = PR1Save;
-}
-#endif
 
 	return randomResult.dw;
 }
@@ -877,36 +799,36 @@ void uitoa(WORD Value, BYTE* Buffer)
 // HI-TECH PICC-18 PRO 9.63, C30 v3.25, and C32 v1.12 already have a ultoa() library function
 // C18 already has a ultoa() function that more-or-less matches this one
 // C32 < 1.12 and C30 < v3.25 need this function
-#if (defined(__PIC32MX__) && (__C32_VERSION__ < 112)) || (defined (__C30__) && (__C30_VERSION__ < 325)) || defined(__C30_LEGACY_LIBC__) || defined(__C32_LEGACY_LIBC__)
-void ultoa(DWORD Value, BYTE* Buffer)
-{
-	BYTE i;
-	DWORD Digit;
-	DWORD Divisor;
-	BOOL Printed = FALSE;
-
-	if(Value)
-	{
-		for(i = 0, Divisor = 1000000000; i < 10; i++)
-		{
-			Digit = Value/Divisor;
-			if(Digit || Printed)
-			{
-				*Buffer++ = '0' + Digit;
-				Value -= Digit*Divisor;
-				Printed = TRUE;
-			}
-			Divisor /= 10;
-		}
-	}
-	else
-	{
-		*Buffer++ = '0';
-	}
-
-	*Buffer = '\0';
-}
-#endif
+//#if (defined(__PIC32MX__) && (__C32_VERSION__ < 112)) || (defined (__C30__) && (__C30_VERSION__ < 325)) || defined(__C30_LEGACY_LIBC__) || defined(__C32_LEGACY_LIBC__)
+//	void ultoa(DWORD Value, BYTE* Buffer)
+//	{
+//		BYTE i;
+//		DWORD Digit;
+//		DWORD Divisor;
+//		BOOL Printed = FALSE;
+//
+//		if(Value)
+//		{
+//			for(i = 0, Divisor = 1000000000; i < 10; i++)
+//			{
+//				Digit = Value/Divisor;
+//				if(Digit || Printed)
+//				{
+//					*Buffer++ = '0' + Digit;
+//					Value -= Digit*Divisor;
+//					Printed = TRUE;
+//				}
+//				Divisor /= 10;
+//			}
+//		}
+//		else
+//		{
+//			*Buffer++ = '0';
+//		}
+//
+//		*Buffer = '\0';
+//	}
+//#endif
 
 /*****************************************************************************
   Function:
@@ -1113,11 +1035,7 @@ WORD swaps(WORD v)
   Returns:
 	The swapped version of v.
   ***************************************************************************/
-#if defined(__C32__)
-DWORD   __attribute__((nomips16)) swapl(DWORD v)
-#else
 DWORD swapl(DWORD v)
-#endif
 {
 	// Swap bytes 0 and 3
 	((DWORD_VAL*)&v)->v[0] ^= ((DWORD_VAL*)&v)->v[3];
@@ -1214,30 +1132,28 @@ WORD CalcIPChecksum(BYTE* buffer, WORD count)
   Returns:
 	Pointer to the initial string.
   ***************************************************************************/
-#if !defined(__18CXX) || defined(HI_TECH_C)
-char* strupr(char* s)
-{
-	char c;
-	char *t;
+//#if !defined(__18CXX) || defined(HI_TECH_C)
+//	char* strupr(char* s)
+//	{
+//		char c;
+//		char *t;
+//
+//		t = s;
+//		while( (c = *t) )
+//		{
+//			if(c >= 'a' && c <= 'z')
+//			{
+//				*t -= ('a' - 'A');
+//			}
+//			t++;
+//		}
+//		return s;
+//	}
+//#endif
 
-	t = s;
-	while( (c = *t) )
-	{
-		if(c >= 'a' && c <= 'z')
-		{
-			*t -= ('a' - 'A');
-		}
-		t++;
-	}
-	return s;
-}
-#endif
-
-#if defined(__18CXX)
 // Make this variable global for the following function.
 // Hi-Tech PICC18 cannot access local function variables from inline asm.
 DWORD_VAL toRotate; 
-#endif
 
 /*****************************************************************************
   Function:
@@ -1266,7 +1182,6 @@ DWORD_VAL toRotate;
 	and C32 already generate compact code.  Those compilers are served
 	by a macro defined in Helpers.h.
   ***************************************************************************/
-#if defined(__18CXX)
 DWORD leftRotateDWORD(DWORD val, BYTE bits)
 {
 	BYTE i, t;
@@ -1283,21 +1198,6 @@ DWORD leftRotateDWORD(DWORD val, BYTE bits)
 	}
 	
 	
-	#if defined(HI_TECH_C)
-	for(; i != 0; i--)
-	{
-		asm("movlb (_toRotate)>>8");
-		//asm("bcf _STATUS,0,C");
-		asm("bcf 0xFD8,0,C");		// HI-TECH PICC-18 PRO 9.63PL1 doesn't define _STATUS
-		asm("btfsc (_toRotate)&0ffh+3,7,B");
-		//asm("bsf _STATUS,0,C");
-		asm("bsf 0xFD8,0,C");		// HI-TECH PICC-18 PRO 9.63PL1 doesn't define _STATUS
-		asm("rlcf (_toRotate)&0ffh+0,F,B");
-		asm("rlcf (_toRotate)&0ffh+1,F,B");
-		asm("rlcf (_toRotate)&0ffh+2,F,B");
-		asm("rlcf (_toRotate)&0ffh+3,F,B");
-	}
-	#else
 	for(; i != 0u; i--)
 	{
 		_asm
@@ -1311,11 +1211,9 @@ DWORD leftRotateDWORD(DWORD val, BYTE bits)
 		rlcf toRotate+3,1,1
 		_endasm
 	}
-	#endif
 	
 	return toRotate.Val;
 }
-#endif
 
 /*****************************************************************************
   Function:

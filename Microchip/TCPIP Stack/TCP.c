@@ -86,15 +86,10 @@
 // approximately 15%.
 #define TCP_OPTIMIZE_FOR_SIZE
 
-// For smallest size and best throughput, TCP_OPTIMIZE_FOR_SIZE 
-// should always be enabled on PIC24/dsPIC products.  On PIC32 
-// products there is very little difference and depnds on compiler 
-// optimization level
-#if defined(__C30__) && !defined(TCP_OPTIMIZE_FOR_SIZE)
-	#define TCP_OPTIMIZE_FOR_SIZE
-#elif defined(__C32__) && defined(TCP_OPTIMIZE_FOR_SIZE)
-	#undef TCP_OPTIMIZE_FOR_SIZE
-#endif
+	// For smallest size and best throughput, TCP_OPTIMIZE_FOR_SIZE 
+	// should always be enabled on PIC24/dsPIC products.  On PIC32 
+	// products there is very little difference and depnds on compiler 
+	// optimization level
 
 // TCP Maximum Segment Size for TX.  The TX maximum segment size is actually 
 // govered by the remote node's MSS option advirtised during connection 
@@ -211,15 +206,6 @@ static WORD NextPort __attribute__((persistent));	// Tracking variable for next 
 #define TCP_SOCKET_COUNT	(sizeof(TCPSocketInitializer)/sizeof(TCPSocketInitializer[0]))
 
 
-#if defined(HI_TECH_C)
-	// The initializer forces this large array out of the bss section 
-	// so we can link correctly.
-	#pragma psect bigdata=TCB_uRAM_BIG
-	#pragma psect data=TCB_uRAM
-	static TCB_STUB TCBStubs[TCP_SOCKET_COUNT] = {'\0'};	
-	#pragma psect data=ordinary_data_sect
-	#pragma psect bigdata=ordinary_data_sect_big
-#else
 	// The TCB array is very large.  With the C18 compiler, one must 
 	// modify the linker script to make an array that spans more than 
 	// one memory bank.  To do this, make the necessary changes to your 
@@ -234,25 +220,16 @@ static WORD NextPort __attribute__((persistent));	// Tracking variable for next 
 	// ...
 	// SECTION    NAME=TCB_uRAM    RAM=gpr11b
 	// ...
-	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata TCB_uRAM
-	#endif
 	static TCB_STUB TCBStubs[TCP_SOCKET_COUNT];
-	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata					// Return to any other RAM section
-	#endif
-#endif
 
 static TCB MyTCB;									// Currently loaded TCB
 static TCP_SOCKET hCurrentTCP = INVALID_SOCKET;		// Current TCP socket
 #if TCP_SYN_QUEUE_MAX_ENTRIES
-	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata SYN_QUEUE_RAM_SECT
-	#endif
 	static TCP_SYN_QUEUE SYNQueue[TCP_SYN_QUEUE_MAX_ENTRIES];	// Array of saved incoming SYN requests that need to be serviced later
-	#if defined(__18CXX) && !defined(HI_TECH_C)	
 		#pragma udata
-	#endif
 #endif
 
 /****************************************************************************
@@ -262,11 +239,7 @@ static TCP_SOCKET hCurrentTCP = INVALID_SOCKET;		// Current TCP socket
 
 static void TCPRAMCopy(PTR_BASE wDest, BYTE vDestType, PTR_BASE wSource, BYTE vSourceType, WORD wLength);
 
-#if defined(__18CXX)
 	static void TCPRAMCopyROM(PTR_BASE wDest, BYTE wDestType, ROM BYTE* wSource, WORD wLength);
-#else
-	#define TCPRAMCopyROM(a,b,c,d)	TCPRAMCopy(a,b,c,TCP_PIC_RAM,d)
-#endif
 
 static void SendTCP(BYTE vTCPFlags, BYTE vSendFlags);
 static void HandleTCPSeg(TCP_HEADER* h, WORD len);

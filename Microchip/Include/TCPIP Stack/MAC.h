@@ -79,12 +79,12 @@
 	 (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
 	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60))
 	#include "TCPIP Stack/ETH97J60.h"
-#elif defined(ENC_CS_TRIS) || defined(WF_CS_TRIS)
+#elif 0 // defined(ENC_CS_TRIS) || defined(WF_CS_TRIS)
 	#include "TCPIP Stack/ENC28J60.h"
-#elif defined(ENC100_INTERFACE_MODE)
+#elif 0 // defined(ENC100_INTERFACE_MODE)
 	#include "TCPIP Stack/ENCX24J600.h"
 	#define PHYREG WORD
-#elif defined(__PIC32MX__) && defined(_ETH)
+#elif 0 //defined(__PIC32MX__) && defined(_ETH)
 	// extra includes for PIC32MX with embedded ETH Controller
 #else
 	#error No Ethernet/WiFi controller defined in HardwareProfile.h.  Defines for an ENC28J60, ENC424J600/624J600, or WiFi MRF24WB10 must be present.
@@ -121,7 +121,7 @@ typedef struct  __attribute__((aligned(2), packed))
 #endif
 
 // MAC RAM definitions
-#if defined(ENC100_INTERFACE_MODE)
+#if 0 //defined(ENC100_INTERFACE_MODE)
 	#define RESERVED_CRYPTO_MEMORY	(128ul)
 	#define RAMSIZE			(24*1024ul)
 	#define TXSTART 		(0x0000ul)
@@ -133,7 +133,7 @@ typedef struct  __attribute__((aligned(2), packed))
 	#define BASE_HTTPB_ADDR (BASE_TCB_ADDR + TCP_ETH_RAM_SIZE)
 	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
 	#define BASE_CRYPTOB_ADDR	(BASE_SSLB_ADDR + RESERVED_SSL_MEMORY)
-#elif defined(WF_CS_TRIS)
+#elif 0 // defined(WF_CS_TRIS)
 	#define RAMSIZE 		(14170ul - 8192ul - RESERVED_HTTP_MEMORY - RESERVED_SSL_MEMORY)
 	#define TXSTART 		(RAMSIZE - (4ul + MAX_PACKET_SIZE + 4ul))
 	#define RXSTART 		(0ul)
@@ -144,7 +144,7 @@ typedef struct  __attribute__((aligned(2), packed))
 	#define BASE_HTTPB_ADDR  (BASE_SCRATCH_ADDR)
 	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
 	#define BASE_TCB_ADDR	(BASE_SSLB_ADDR + RESERVED_SSL_MEMORY)
-#elif defined(__PIC32MX__) && defined(_ETH) && !defined(ENC_CS_TRIS)
+#elif 0 //defined(__PIC32MX__) && defined(_ETH) && !defined(ENC_CS_TRIS)
 	#define BASE_TX_ADDR	(MACGetTxBaseAddr())
 	#define BASE_HTTPB_ADDR	(MACGetHttpBaseAddr())
 	#define BASE_SSLB_ADDR	(MACGetSslBaseAddr())
@@ -307,18 +307,8 @@ void MACFlush(void);
 
 
 // ROM function variants for PIC18
-#if defined(__18CXX)
 	void MACPutROMArray(ROM BYTE *val, WORD len);
-#else
-	#define MACPutROMArray(a,b)	MACPutArray((BYTE*)a,b)
-#endif
 
-// PIC32MX with embedded ETHC functions
-#if defined(__PIC32MX__) && defined(_ETH)
-	PTR_BASE MACGetTxBaseAddr(void);
-	PTR_BASE MACGetHttpBaseAddr(void);
-	PTR_BASE MACGetSslBaseAddr(void);
-#endif
 
 	
 #endif

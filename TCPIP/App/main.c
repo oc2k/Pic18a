@@ -90,9 +90,9 @@ volatile unsigned char RCIndex=0, TCIndex=0;
 
 // Use UART2 instead of UART1 for stdout (printf functions).  Explorer 16 
 // serial port hardware is on PIC UART2 module.
-#if defined(EXPLORER_16) || defined(PIC24FJ256DA210_DEV_BOARD)
-    int __C30_UART = 2;
-#endif
+//#if defined(EXPLORER_16) || defined(PIC24FJ256DA210_DEV_BOARD)
+//    int __C30_UART = 2;
+//#endif
 
 
 // Private helper functions.
@@ -116,23 +116,14 @@ static void ProcessIO(void);
 // 
 // NOTE: Several PICs, including the PIC18F4620 revision A3 have a RETFIE FAST/MOVFF bug
 // The interruptlow keyword is used to work around the bug when using C18
-#if defined(__18CXX)
-    #if defined(HI_TECH_C)
-    void interrupt low_priority LowISR(void)
-    #else
     #pragma interruptlow LowISR
     void LowISR(void)
-    #endif
     {
         TickUpdate();
     }
     
-    #if defined(HI_TECH_C)
-    void interrupt HighISR(void)
-    #else
     #pragma interruptlow HighISR
     void HighISR(void)
-    #endif
     {
 		#ifdef WEBPAGE_DEMO_UART
 		if (PIR1 & 0x20)
@@ -149,37 +140,12 @@ static void ProcessIO(void);
         #endif // WF_CS_TRIS
     }
 
-    #if !defined(HI_TECH_C)
     #pragma code lowVector=0x18
     void LowVector(void){_asm goto LowISR _endasm}
     #pragma code highVector=0x8
     void HighVector(void){_asm goto HighISR _endasm}
     #pragma code // Return to default code section
-    #endif
 
-// C30 and C32 Exception Handlers
-// If your code gets here, you either tried to read or write
-// a NULL pointer, or your application overflowed the stack
-// by having too many local variables or parameters declared.
-#elif defined(__C30__)
-    void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
-    {
-        Nop();
-        Nop();
-    }
-    void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
-    {
-        Nop();
-        Nop();
-    }
-    
-#elif defined(__C32__)
-    void _general_exception_handler(unsigned cause, unsigned status)
-    {
-        Nop();
-        Nop();
-    }
-#endif
 
 #if defined(WF_CS_TRIS)
 // Global variables
@@ -189,11 +155,7 @@ UINT8 ConnectionProfileID;
 //
 // Main application entry point.
 //
-#if defined(__18CXX)
 void main(void)
-#else
-int main(void)
-#endif
 {
     static DWORD t = 0;
     static DWORD dwLastIP = 0;
@@ -622,12 +584,7 @@ void WF_Connect(void)
 void DisplayIPValue(IP_ADDR IPVal)
 {
 // printf("%u.%u.%u.%u", IPVal.v[0], IPVal.v[1], IPVal.v[2], IPVal.v[3]);
-#if defined (__dsPIC33E__) || defined (__PIC24E__)
-    static BYTE IPDigit[4];                        /* Needs to be declared as static to avoid the array getting optimized by C30 v3.30 compiler for dsPIC33E/PIC24E. 
-                                                   Otherwise the LCD displays corrupted IP address on Explorer 16. To be fixed in the future compiler release*/
-#else
     BYTE IPDigit[4];
-#endif
     BYTE i;
 #ifdef USE_LCD
     BYTE j;
@@ -671,10 +628,6 @@ void DisplayIPValue(IP_ADDR IPVal)
 // Processes A/D data from the potentiometer
 static void ProcessIO(void)
 {
-#if defined(__C30__) || defined(__C32__)
-    // Convert potentiometer result into ASCII string
-    uitoa((WORD)ADC1BUF0, AN0String);
-#else
     // AN0 should already be set up as an analog input
     ADCON0bits.GO = 1;
 
@@ -692,7 +645,6 @@ static void ProcessIO(void)
 
     // Convert 10-bit value into ASCII string
     uitoa(*((WORD*)(&ADRESL)), AN0String);
-#endif
 }
 
 
@@ -730,7 +682,6 @@ static void InitializeBoard(void)
     LED7_TRIS = 0;
     LED_PUT(0x00);
 
-#if defined(__18CXX)
     // Enable 4x/5x/96MHz PLL on PIC18F87J10, PIC18F97J60, PIC18F87J50, etc.
     OSCTUNE = 0x40;
 
@@ -797,190 +748,6 @@ static void InitializeBoard(void)
         ADCON1bits.ADCAL = 0;
     #endif
 
-#else    // 16-bit C30 and and 32-bit C32
-    #if defined(__PIC32MX__)
-    {
-        // Enable multi-vectored interrupts
-        INTEnableSystemMultiVectoredInt();
-        
-        // Enable optimal performance
-        SYSTEMConfigPerformance(GetSystemClock());
-        mOSCSetPBDIV(OSC_PB_DIV_1);                // Use 1:1 CPU Core:Peripheral clocks
-        
-        // Disable JTAG port so we get our I/O pins back, but first
-        // wait 50ms so if you want to reprogram the part with 
-        // JTAG, you'll still have a tiny window before JTAG goes away.
-        // The PIC32 Starter Kit debuggers use JTAG and therefore must not 
-        // disable JTAG.
-        DelayMs(50);
-        #if !defined(__MPLAB_DEBUGGER_PIC32MXSK) && !defined(__MPLAB_DEBUGGER_FS2)
-            DDPCONbits.JTAGEN = 0;
-        #endif
-        LED_PUT(0x00);                // Turn the LEDs off
-        
-        CNPUESET = 0x00098000;        // Turn on weak pull ups on CN15, CN16, CN19 (RD5, RD7, RD13), which is connected to buttons on PIC32 Starter Kit boards
-    }
-    #endif
-
-    #if defined(__dsPIC33F__) || defined(__PIC24H__)
-        // Crank up the core frequency
-        PLLFBD = 38;                // Multiply by 40 for 160MHz VCO output (8MHz XT oscillator)
-        CLKDIV = 0x0000;            // FRC: divide by 2, PLLPOST: divide by 2, PLLPRE: divide by 2
-    
-        // Port I/O
-        AD1PCFGHbits.PCFG23 = 1;    // Make RA7 (BUTTON1) a digital input
-        AD1PCFGHbits.PCFG20 = 1;    // Make RA12 (INT1) a digital input for MRF24W PICtail Plus interrupt
-
-        // ADC
-        AD1CHS0 = 0;                // Input to AN0 (potentiometer)
-        AD1PCFGLbits.PCFG5 = 0;     // Disable digital input on AN5 (potentiometer)
-        AD1PCFGLbits.PCFG4 = 0;     // Disable digital input on AN4 (TC1047A temp sensor)
-
-
-    #elif defined(__dsPIC33E__)||defined(__PIC24E__)
-
-        // Crank up the core frequency
-        PLLFBD = 38;                /* M  = 30   */
-        CLKDIVbits.PLLPOST = 0;     /* N1 = 2    */
-        CLKDIVbits.PLLPRE = 0;      /* N2 = 2    */
-        OSCTUN = 0;    
-        
-        /*    Initiate Clock Switch to Primary
-         *    Oscillator with PLL (NOSC= 0x3)*/
-        __builtin_write_OSCCONH(0x03);        
-        __builtin_write_OSCCONL(0x01);
-        // Disable Watch Dog Timer
-        RCONbits.SWDTEN = 0;
-        while (OSCCONbits.COSC != 0x3); 
-        while (_LOCK == 0);            /* Wait for PLL lock at 60 MIPS */        
-        // Port I/O
-        ANSELAbits.ANSA7 = 0 ;   //Make RA7 (BUTTON1) a digital input
-        #if defined ENC100_INTERFACE_MODE > 0
-            ANSELEbits.ANSE0 = 0;      // Make these PMP pins as digital output when the interface is parallel.
-            ANSELEbits.ANSE1 = 0;
-            ANSELEbits.ANSE2 = 0;
-            ANSELEbits.ANSE3 = 0;    
-            ANSELEbits.ANSE4 = 0;
-            ANSELEbits.ANSE5 = 0;
-            ANSELEbits.ANSE6 = 0;
-            ANSELEbits.ANSE7 = 0;    
-            ANSELBbits.ANSB10 = 0;
-            ANSELBbits.ANSB11 = 0;
-            ANSELBbits.ANSB12 = 0;
-            ANSELBbits.ANSB13 = 0;
-            ANSELBbits.ANSB15 = 0;
-        #endif
-
-        ANSELEbits.ANSE8= 0 ;    // Make RE8(INT1) a digital input for ZeroG ZG2100M PICtail 
-                    
-        AD1CHS0 = 0;             // Input to AN0 (potentiometer)
-        ANSELBbits.ANSB0= 1;     // Input to AN0 (potentiometer)
-        ANSELBbits.ANSB5= 1;     // Disable digital input on AN5 (potentiometer)
-        ANSELBbits.ANSB4= 1;     // Disable digital input on AN4 (TC1047A temp sensor)
-                    
-        ANSELDbits.ANSD7 =0;     //  Digital Pin Selection for S3(Pin 83) and S4(pin 84).
-        ANSELDbits.ANSD6 =0;
-            
-        ANSELGbits.ANSG6 =0;     // Enable Digital input for RG6 (SCK2)
-        ANSELGbits.ANSG7 =0;     // Enable Digital input for RG7 (SDI2)
-        ANSELGbits.ANSG8 =0;     // Enable Digital input for RG8 (SDO2)
-        ANSELGbits.ANSG9 =0;     // Enable Digital input for RG9 (CS)
-                
-        #if defined ENC100_INTERFACE_MODE == 0    // SPI Interface, UART can be used for debugging. Not allowed for other interfaces.
-            RPOR9 = 0x0300;          //RP101= U2TX
-            RPINR19 = 0X0064;        //RP100= U2RX
-        #endif
-
-        #if defined WF_CS_TRIS
-            RPINR1bits.INT3R = 30;
-            WF_CS_IO = 1;
-            WF_CS_TRIS = 0;        
-
-        #endif
-
-    #else    //defined(__PIC24F__) || defined(__PIC32MX__)
-        #if defined(__PIC24F__)
-            CLKDIVbits.RCDIV = 0;        // Set 1:1 8MHz FRC postscalar
-        #endif
-        
-        // ADC
-        #if defined(__PIC24FJ256DA210__) || defined(__PIC24FJ256GB210__)
-            // Disable analog on all pins
-            ANSA = 0x0000;
-            ANSB = 0x0000;
-            ANSC = 0x0000;
-            ANSD = 0x0000;
-            ANSE = 0x0000;
-            ANSF = 0x0000;
-            ANSG = 0x0000;
-        #else
-            AD1CHS = 0;                   // Input to AN0 (potentiometer)
-            AD1PCFGbits.PCFG4 = 0;        // Disable digital input on AN4 (TC1047A temp sensor)
-            #if defined(__32MX460F512L__) || defined(__32MX795F512L__)    // PIC32MX460F512L and PIC32MX795F512L PIMs has different pinout to accomodate USB module
-                AD1PCFGbits.PCFG2 = 0;    // Disable digital input on AN2 (potentiometer)
-            #else
-                AD1PCFGbits.PCFG5 = 0;    // Disable digital input on AN5 (potentiometer)
-            #endif
-        #endif
-    #endif
-
-    // ADC
-    AD1CON1 = 0x84E4;            // Turn on, auto sample start, auto-convert, 12 bit mode (on parts with a 12bit A/D)
-    AD1CON2 = 0x0404;            // AVdd, AVss, int every 2 conversions, MUXA only, scan
-    AD1CON3 = 0x1003;            // 16 Tad auto-sample, Tad = 3*Tcy
-    #if defined(__32MX460F512L__) || defined(__32MX795F512L__)    // PIC32MX460F512L and PIC32MX795F512L PIMs has different pinout to accomodate USB module
-        AD1CSSL = 1<<2;                // Scan pot
-    #else
-        AD1CSSL = 1<<5;                // Scan pot
-    #endif
-
-    // UART
-    #if defined(STACK_USE_UART)
-
-        #if defined(__PIC24E__) || defined(__dsPIC33E__)
-            #if defined (ENC_CS_IO) || defined (WF_CS_IO)   // UART to be used in case of ENC28J60 or MRF24W
-                __builtin_write_OSCCONL(OSCCON & 0xbf);
-                RPOR9bits.RP101R = 3; //Map U2TX to RF5
-                RPINR19bits.U2RXR = 0;
-                RPINR19bits.U2RXR = 0x64; //Map U2RX to RF4
-                __builtin_write_OSCCONL(OSCCON | 0x40);
-            #endif
-            #if(ENC100_INTERFACE_MODE == 0)                 // UART to be used only in case of SPI interface with ENC624Jxxx
-                    __builtin_write_OSCCONL(OSCCON & 0xbf);
-                RPOR9bits.RP101R = 3; //Map U2TX to RF5
-                RPINR19bits.U2RXR = 0;
-                RPINR19bits.U2RXR = 0x64; //Map U2RX to RF4
-                __builtin_write_OSCCONL(OSCCON | 0x40);
-
-            #endif
-        #endif
-
-        UARTTX_TRIS = 0;
-        UARTRX_TRIS = 1;
-        UMODE = 0x8000;            // Set UARTEN.  Note: this must be done before setting UTXEN
-
-        #if defined(__C30__)
-            USTA = 0x0400;        // UTXEN set
-            #define CLOSEST_UBRG_VALUE ((GetPeripheralClock()+8ul*BAUD_RATE)/16/BAUD_RATE-1)
-            #define BAUD_ACTUAL (GetPeripheralClock()/16/(CLOSEST_UBRG_VALUE+1))
-        #else    //defined(__C32__)
-            USTA = 0x00001400;        // RXEN set, TXEN set
-            #define CLOSEST_UBRG_VALUE ((GetPeripheralClock()+8ul*BAUD_RATE)/16/BAUD_RATE-1)
-            #define BAUD_ACTUAL (GetPeripheralClock()/16/(CLOSEST_UBRG_VALUE+1))
-        #endif
-    
-        #define BAUD_ERROR ((BAUD_ACTUAL > BAUD_RATE) ? BAUD_ACTUAL-BAUD_RATE : BAUD_RATE-BAUD_ACTUAL)
-        #define BAUD_ERROR_PRECENT    ((BAUD_ERROR*100+BAUD_RATE/2)/BAUD_RATE)
-        #if (BAUD_ERROR_PRECENT > 3)
-            #warning UART frequency error is worse than 3%
-        #elif (BAUD_ERROR_PRECENT > 2)
-            #warning UART frequency error is worse than 2%
-        #endif
-    
-        UBRG = CLOSEST_UBRG_VALUE;
-    #endif
-
-#endif
 
 // Deassert all chip select lines so there isn't any problem with 
 // initialization order.  Ex: When ENC28J60 is on SPI2 with Explorer 16, 
@@ -1036,68 +803,8 @@ static void InitializeBoard(void)
     __builtin_write_OSCCONL(OSCCON | 0x40); // Lock PPS
 #endif
 
-#if defined(__PIC24FJ256DA210__)
-    __builtin_write_OSCCONL(OSCCON & 0xBF);  // Unlock PPS
 
-    // Inputs
-    RPINR19bits.U2RXR = 11;   // U2RX = RP11
-    RPINR20bits.SDI1R = 0;    // SDI1 = RP0
-    RPINR0bits.INT1R = 34;    // Assign RE9/RPI34 to INT1 (input) for MRF24W Wi-Fi PICtail Plus interrupt
-    
-    // Outputs
-    RPOR8bits.RP16R = 5;    // RP16 = U2TX
-    RPOR1bits.RP2R = 8;     // RP2 = SCK1
-    RPOR0bits.RP1R = 7;     // RP1 = SDO1
 
-    __builtin_write_OSCCONL(OSCCON | 0x40); // Lock PPS
-#endif
-
-#if defined(__PIC24FJ256GB110__) || defined(__PIC24FJ256GB210__)
-    __builtin_write_OSCCONL(OSCCON & 0xBF);  // Unlock PPS
-    
-    // Configure SPI1 PPS pins (ENC28J60/ENCX24J600/MRF24W or other PICtail Plus cards)
-    RPOR0bits.RP0R = 8;         // Assign RP0 to SCK1 (output)
-    RPOR7bits.RP15R = 7;        // Assign RP15 to SDO1 (output)
-    RPINR20bits.SDI1R = 23;     // Assign RP23 to SDI1 (input)
-
-    // Configure SPI2 PPS pins (25LC256 EEPROM on Explorer 16)
-    RPOR10bits.RP21R = 11;      // Assign RG6/RP21 to SCK2 (output)
-    RPOR9bits.RP19R = 10;       // Assign RG8/RP19 to SDO2 (output)
-    RPINR22bits.SDI2R = 26;     // Assign RG7/RP26 to SDI2 (input)
-    
-    // Configure UART2 PPS pins (MAX3232 on Explorer 16)
-    #if !defined(ENC100_INTERFACE_MODE) || (ENC100_INTERFACE_MODE == 0) || defined(ENC100_PSP_USE_INDIRECT_RAM_ADDRESSING)
-    RPINR19bits.U2RXR = 10;     // Assign RF4/RP10 to U2RX (input)
-    RPOR8bits.RP17R = 5;        // Assign RF5/RP17 to U2TX (output)
-    #endif
-    
-    // Configure INT1 PPS pin (MRF24W Wi-Fi PICtail Plus interrupt signal when in SPI slot 1)
-    RPINR0bits.INT1R = 33;    // Assign RE8/RPI33 to INT1 (input)
-
-    // Configure INT3 PPS pin (MRF24W Wi-Fi PICtail Plus interrupt signal when in SPI slot 2)
-    RPINR1bits.INT3R = 40;    // Assign RC3/RPI40 to INT3 (input)
-
-    __builtin_write_OSCCONL(OSCCON | 0x40); // Lock PPS
-#endif
-
-#if defined(__PIC24FJ256GA110__)
-    __builtin_write_OSCCONL(OSCCON & 0xBF);  // Unlock PPS
-    
-    // Configure SPI2 PPS pins (25LC256 EEPROM on Explorer 16 and ENC28J60/ENCX24J600/MRF24W or other PICtail Plus cards)
-    // Note that the ENC28J60/ENCX24J600/MRF24W PICtails SPI PICtails must be inserted into the middle SPI2 socket, not the topmost SPI1 slot as normal.  This is because PIC24FJ256GA110 A3 silicon has an input-only RPI PPS pin in the ordinary SCK1 location.  Silicon rev A5 has this fixed, but for simplicity all demos will assume we are using SPI2.
-    RPOR10bits.RP21R = 11;      // Assign RG6/RP21 to SCK2 (output)
-    RPOR9bits.RP19R = 10;       // Assign RG8/RP19 to SDO2 (output)
-    RPINR22bits.SDI2R = 26;     // Assign RG7/RP26 to SDI2 (input)
-    
-    // Configure UART2 PPS pins (MAX3232 on Explorer 16)
-    RPINR19bits.U2RXR = 10;     // Assign RF4/RP10 to U2RX (input)
-    RPOR8bits.RP17R = 5;        // Assign RF5/RP17 to U2TX (output)
-    
-    // Configure INT3 PPS pin (MRF24W PICtail Plus interrupt signal)
-    RPINR1bits.INT3R = 36;      // Assign RA14/RPI36 to INT3 (input)
-
-    __builtin_write_OSCCONL(OSCCON | 0x40); // Lock PPS
-#endif
 
 
 #if defined(DSPICDEM11)

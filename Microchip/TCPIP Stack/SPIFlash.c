@@ -88,45 +88,15 @@
 #define AAI     0x40    // Mask for Status Register AAI (Auto Address Increment Programming status) bit
 #define BPL     0x80    // Mask for Status Register BPL (BPx block protect bit read-only protect) bit
 
-#if defined(__PIC24F__) || defined(__PIC24FK__)
-    #define PROPER_SPICON1  (0x001B | 0x0120)   // 1:1 primary prescale, 2:1 secondary prescale, CKE=1, MASTER mode
-#elif defined(__dsPIC33F__) || defined(__PIC24H__) || defined(__dsPIC33E__) || defined (__PIC24E__)
-    #define PROPER_SPICON1  (0x000F | 0x0120)   // 1:1 primary prescale, 5:1 secondary prescale, CKE=1, MASTER mode
-#elif defined(__dsPIC30F__)
-    #define PROPER_SPICON1  (0x0017 | 0x0120)   // 1:1 primary prescale, 3:1 secondary prescale, CKE=1, MASTER mode
-#elif defined(__PIC32MX__)
-    #define PROPER_SPICON1  (_SPI2CON_ON_MASK  | _SPI2CON_CKE_MASK | _SPI2CON_MSTEN_MASK)
-#else
     #define PROPER_SPICON1  (0x20)              // SSPEN bit is set, SPI in master mode, FOSC/4, IDLE state is low level
-#endif
 
 // Maximum speed of SPI Flash part in Hz
 // Should theoretically operate at 25MHz, but need to account for level-shifting delays
 #define SPIFLASH_MAX_SPI_FREQ       (16000000ul)
 
-#if defined (__18CXX)
     #define ClearSPIDoneFlag()  {SPIFLASH_SPI_IF = 0;}
     #define WaitForDataByte()   {while(!SPIFLASH_SPI_IF); SPIFLASH_SPI_IF = 0;}
     #define SPI_ON_BIT          (SPIFLASH_SPICON1bits.SSPEN)
-#elif defined(__C30__)
-    #define ClearSPIDoneFlag()
-    static inline __attribute__((__always_inline__)) void WaitForDataByte( void )
-    {
-        while ((SPIFLASH_SPISTATbits.SPITBF == 1) || (SPIFLASH_SPISTATbits.SPIRBF == 0));
-    }
-
-    #define SPI_ON_BIT          (SPIFLASH_SPISTATbits.SPIEN)
-#elif defined( __PIC32MX__ )
-    #define ClearSPIDoneFlag()
-    static inline __attribute__((__always_inline__)) void WaitForDataByte( void )
-    {
-        while (!SPIFLASH_SPISTATbits.SPITBE || !SPIFLASH_SPISTATbits.SPIRBF);
-    }
-
-    #define SPI_ON_BIT          (SPIFLASH_SPICON1bits.ON)
-#else
-    #error Determine SPI flag mechanism
-#endif
 
 // Internal pointer to address being written
 static DWORD dwWriteAddr;
@@ -178,13 +148,7 @@ void SPIFlashInit(void)
 	BYTE i;
     volatile BYTE Dummy;
     BYTE vSPIONSave;
-    #if defined(__18CXX)
     BYTE SPICON1Save;
-    #elif defined(__C30__)
-    WORD SPICON1Save;
-    #else
-    DWORD SPICON1Save;
-    #endif
 
     SPIFLASH_CS_IO = 1;
     SPIFLASH_CS_TRIS = 0;   // Drive SPI Flash chip select pin
@@ -203,16 +167,8 @@ void SPIFlashInit(void)
     SPI_ON_BIT = 1;
 
     ClearSPIDoneFlag();
-    #if defined(__C30__)
-        SPIFLASH_SPICON2 = 0;
-        SPIFLASH_SPISTAT = 0;    // clear SPI
-        SPIFLASH_SPISTATbits.SPIEN = 1;
-    #elif defined(__C32__)
-        SPIFLASH_SPIBRG = (GetPeripheralClock()-1ul)/2ul/SPIFLASH_MAX_SPI_FREQ;
-    #elif defined(__18CXX)
         SPIFLASH_SPISTATbits.CKE = 1;       // Transmit data on rising edge of clock
         SPIFLASH_SPISTATbits.SMP = 0;       // Input sampled at middle of data output time
-    #endif
 
 	// Read Device ID code to determine supported device capabilities/instructions
 	{
@@ -316,13 +272,7 @@ void SPIFlashReadArray(DWORD dwAddress, BYTE *vData, WORD wLength)
 {
     volatile BYTE Dummy;
     BYTE vSPIONSave;
-    #if defined(__18CXX)
     BYTE SPICON1Save;
-    #elif defined(__C30__)
-    WORD SPICON1Save;
-    #else
-    DWORD SPICON1Save;
-    #endif
 
     // Ignore operations when the destination is NULL or nothing to read
     if(vData == NULL || wLength == 0)
@@ -450,13 +400,7 @@ void SPIFlashWrite(BYTE vData)
 {
     volatile BYTE Dummy;
     BYTE vSPIONSave;
-    #if defined(__18CXX)
     BYTE SPICON1Save;
-    #elif defined(__C30__)
-    WORD SPICON1Save;
-    #else
-    DWORD SPICON1Save;
-    #endif
 
     // Save SPI state (clock speed)
     SPICON1Save = SPIFLASH_SPICON1;
@@ -545,13 +489,7 @@ void SPIFlashWriteArray(BYTE* vData, WORD wLen)
 {
     volatile BYTE Dummy;
     BYTE vSPIONSave;
-    #if defined(__18CXX)
     BYTE SPICON1Save;
-    #elif defined(__C30__)
-    WORD SPICON1Save;
-    #else
-    DWORD SPICON1Save;
-    #endif
     BOOL isStarted;
     BYTE vOpcode;
     BYTE i;
@@ -717,13 +655,7 @@ void SPIFlashEraseSector(DWORD dwAddr)
 {
     volatile BYTE Dummy;
     BYTE vSPIONSave;
-    #if defined(__18CXX)
     BYTE SPICON1Save;
-    #elif defined(__C30__)
-    WORD SPICON1Save;
-    #else
-    DWORD SPICON1Save;
-    #endif
 
     // Save SPI state (clock speed)
     SPICON1Save = SPIFLASH_SPICON1;
@@ -964,17 +896,7 @@ unsigned char SPITransfer(unsigned char inbyte)
  *
  * Overview:        Initialize SPI module for to serial flash.
  ********************************************************************/
-#if defined(HPC_EXPLORER) && !defined(__18F87J10)
-	#define PROPER_SPICON1	(0x20)		/* SSPEN bit is set, SPI in master mode, FOSC/4, IDLE state is low level */
-#elif defined(__PIC24F__) || defined(__PIC24FK__)
-    #define PROPER_SPICON1 	(0x0013 | 0x0120)	/* 1:1 primary prescale, 4:1 secondary prescale, CKE=1, MASTER mode */
-#elif defined(__dsPIC30F__)
-    #define PROPER_SPICON1 	(0x0017 | 0x0120)	/* 1:1 primary prescale, 3:1 secondary prescale, CKE=1, MASTER mode */
-#elif defined(__dsPIC33F__) || defined(__PIC24H__)
-    #define PROPER_SPICON1	(0x0003 | 0x0120)	/* 1:1 primary prescale, 8:1 secondary prescale, CKE=1, MASTER mode */
-#else
 	#define PROPER_SPICON1	(0x21)		/* SSPEN bit is set, SPI in master mode, FOSC/16, IDLE state is low level */
-#endif
 
 void SPIFlashInit(void)
 {
@@ -986,15 +908,9 @@ void SPIFlashInit(void)
 	SPIFLASH_SDO_TRIS = 0;	// Set SDO pin as an output
 
 	SPIFLASH_SPICON1 = PROPER_SPICON1; // See PROPER_SPICON1 definition above
-	#if defined(__C30__)
-	    SPIFLASH_SPICON2 = 0;
-	    SPIFLASH_SPISTAT = 0;    // clear SPI
-	    SPIFLASH_SPISTATbits.SPIEN = 1;
-	#elif defined(__18CXX)
 		SPIFLASH_SPI_IF = 0;
 		SPIFLASH_SPISTATbits.CKE = 1; 	// Transmit data on rising edge of clock
 		SPIFLASH_SPISTATbits.SMP = 0;		// Input sampled at middle of data output time
-	#endif
 	FLASHReadyFlag = 1;
 }
 

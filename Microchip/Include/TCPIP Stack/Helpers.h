@@ -52,25 +52,25 @@
 #define __HELPERS_H
 
 
-#if !defined(__18CXX) || defined(HI_TECH_C)
-	char *strupr(char* s);
-#endif
+//#if !defined(__18CXX) || defined(HI_TECH_C)
+//	char *strupr(char* s);
+//#endif
 
 // Implement consistent ultoa() function
-#if (defined(__PIC32MX__) && (__C32_VERSION__ < 112)) || (defined (__C30__) && (__C30_VERSION__ < 325)) || defined(__C30_LEGACY_LIBC__) || defined(__C32_LEGACY_LIBC__)
-	// C32 < 1.12 and C30 < v3.25 need this 2 parameter stack implemented function
-	void ultoa(DWORD Value, BYTE* Buffer);
-#elif defined(__18CXX) && !defined(HI_TECH_C)
+//#if (defined(__PIC32MX__) && (__C32_VERSION__ < 112)) || (defined (__C30__) && (__C30_VERSION__ < 325)) || defined(__C30_LEGACY_LIBC__) || defined(__C32_LEGACY_LIBC__)
+//	// C32 < 1.12 and C30 < v3.25 need this 2 parameter stack implemented function
+//	void ultoa(DWORD Value, BYTE* Buffer);
+//#elif defined(__18CXX) && !defined(HI_TECH_C)
 	// C18 already has a 2 parameter ultoa() function
 	#include <stdlib.h>
-#else
+//#else
 	// HI-TECH PICC-18 PRO 9.63, C30 v3.25+, and C32 v1.12+ already have a ultoa() stdlib 
 	// library function, but it requires 3 parameters.  The TCP/IP Stack 
 	// assumes the C18 style 2 parameter ultoa() function, so we shall 
 	// create a macro to automatically convert the code.
-	#include <stdlib.h>
-	#define ultoa(val,buf)	ultoa((char*)(buf),(val),10)
-#endif
+//	#include <stdlib.h>
+//	#define ultoa(val,buf)	ultoa((char*)(buf),(val),10)
+//#endif
 
 #if defined(DEBUG)
 	#define DebugPrint(a)	{putrsUART(a);}
@@ -104,11 +104,7 @@ size_t  strncpy_m(char* destStr, size_t destSize, int nStrings, ...);
 
 WORD    swaps(WORD v);
 
-#if defined(__C32__)
-DWORD   __attribute__((nomips16)) swapl(DWORD v);
-#else
 DWORD   swapl(DWORD v);
-#endif
 
 WORD    CalcIPChecksum(BYTE* buffer, WORD len);
 
