@@ -108,9 +108,7 @@ typedef struct  __attribute__((aligned(2), packed))
 #define MAC_UNKNOWN 	(0xFFu)
 
 
-#if !defined(STACK_USE_HTTP2_SERVER)
 	#define RESERVED_HTTP_MEMORY 0ul
-#endif
 
 #if !defined(STACK_USE_SSL)
 	#define RESERVED_SSL_MEMORY 0ul

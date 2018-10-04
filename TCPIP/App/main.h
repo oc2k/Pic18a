@@ -75,13 +75,6 @@ void DoUARTConfig(void);
 
 void SMTPDemo(void);
 void PingDemo(void);
-void SNMPTrapDemo(void);
-void SNMPV2TrapDemo(void);
-void GenericTCPClient(void);
-void GenericTCPServer(void);
-void BerkeleyTCPClientDemo(void);
-void BerkeleyTCPServerDemo(void);
-void BerkeleyUDPClientDemo(void);
 
 
 // Define a header structure for validating the AppConfig data structure in EEPROM/Flash

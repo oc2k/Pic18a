@@ -83,12 +83,6 @@ static SM_STACK smStack;
 
 NODE_INFO remoteNode;
 
-#if defined (WF_CS_TRIS) && defined (STACK_USE_DHCP_CLIENT)
-BOOL g_DhcpRenew = FALSE;
-extern void SetDhcpProgressState(void);
-UINT32 g_DhcpRetryTimer = 0;
-#endif
-
 
 /*********************************************************************
  * Function:        void StackInit(void)
@@ -109,20 +103,6 @@ void StackInit(void)
 {
 	static BOOL once = FALSE;
     smStack                     = SM_STACK_IDLE;
-
-#if defined(STACK_USE_IP_GLEANING) || defined(STACK_USE_DHCP_CLIENT)
-    /*
-     * If DHCP or IP Gleaning is enabled,
-     * startup in Config Mode.
-     */
-    AppConfig.Flags.bInConfigMode = TRUE;
-
-#endif
-
-#if defined (WF_CS_TRIS) && defined (STACK_USE_DHCP_CLIENT)
-	g_DhcpRenew = FALSE;
-	g_DhcpRetryTimer = 0;
-#endif
 
 	if (!once) {
 		// Seed the LFSRRand() function
@@ -150,44 +130,12 @@ void StackInit(void)
     TCPInit();
 #endif
 
-#if defined(STACK_USE_BERKELEY_API)
-	BerkeleySocketInit();
-#endif
-
-#if defined(STACK_USE_HTTP2_SERVER)
-    HTTPInit();
-#endif
-
 #if defined(STACK_USE_RSA)
 	RSAInit();
 #endif
 
 #if defined(STACK_USE_SSL)
     SSLInit();
-#endif
-
-#if defined(STACK_USE_FTP_SERVER) && defined(STACK_USE_MPFS2)
-    FTPInit();
-#endif
-
-#if defined(STACK_USE_SNMP_SERVER)
-	SNMPInit();
-#endif
-
-#if defined(STACK_USE_DHCP_CLIENT)
-	DHCPInit(0);
-    if(!AppConfig.Flags.bIsDHCPEnabled)
-    {
-        DHCPDisable(0);
-    }
-#endif
-
-#if defined(STACK_USE_AUTO_IP)
-    AutoIPInit(0);
-#endif
-
-#if defined(STACK_USE_DYNAMICDNS_CLIENT)
-	DDNSInit();
 #endif
 
 #if defined(STACK_USE_RANDOM)
@@ -230,82 +178,8 @@ void StackTask(void)
             WFEasyConfigMgr();
         #endif
         
-    	#if defined(STACK_USE_DHCP_CLIENT)
-        	// Normally, an application would not include  DHCP module
-        	// if it is not enabled. But in case some one wants to disable
-        	// DHCP module at run-time, remember to not clear our IP
-        	// address if link is removed.
-        	if(AppConfig.Flags.bIsDHCPEnabled)
-        	{
-        		if(g_DhcpRenew == TRUE)
-        		{
-        			g_DhcpRenew = FALSE;
-            		AppConfig.MyIPAddr.Val = AppConfig.DefaultIPAddr.Val;
-        			AppConfig.MyMask.Val = AppConfig.DefaultMask.Val;
-        			AppConfig.Flags.bInConfigMode = TRUE;
-        			DHCPInit(0);
-					g_DhcpRetryTimer = (UINT32)TickGet();
-        		} else {
-        			if (g_DhcpRetryTimer && TickGet() - g_DhcpRetryTimer >= TICKS_PER_SECOND * 8) {
-						DHCPInit(0);
-						g_DhcpRetryTimer = (UINT32)TickGet();
-        			}
-        		}
-        	
-        		// DHCP must be called all the time even after IP configuration is
-        		// discovered.
-        		// DHCP has to account lease expiration time and renew the configuration
-        		// time.
-        		DHCPTask();
-        		
-        		if(DHCPIsBound(0)) {
-        			AppConfig.Flags.bInConfigMode = FALSE;
-					g_DhcpRetryTimer = 0;
-        		}
-        	}
-    	#endif // STACK_USE_DHCP_CLIENT
-        
     #endif // WF_CS_TRIS
 
-
-	#if defined(STACK_USE_DHCP_CLIENT) && !defined(WF_CS_TRIS)
-	// Normally, an application would not include  DHCP module
-	// if it is not enabled. But in case some one wants to disable
-	// DHCP module at run-time, remember to not clear our IP
-	// address if link is removed.
-	if(AppConfig.Flags.bIsDHCPEnabled)
-	{
-		static BOOL bLastLinkState = FALSE;
-		BOOL bCurrentLinkState;
-		
-		bCurrentLinkState = MACIsLinked();
-		if(bCurrentLinkState != bLastLinkState)
-		{
-			bLastLinkState = bCurrentLinkState;
-			if(!bCurrentLinkState)
-			{
-				AppConfig.MyIPAddr.Val = AppConfig.DefaultIPAddr.Val;
-				AppConfig.MyMask.Val = AppConfig.DefaultMask.Val;
-				AppConfig.Flags.bInConfigMode = TRUE;
-				DHCPInit(0);
-			}
-		}
-	
-		// DHCP must be called all the time even after IP configuration is
-		// discovered.
-		// DHCP has to account lease expiration time and renew the configuration
-		// time.
-		DHCPTask();
-		
-		if(DHCPIsBound(0))
-			AppConfig.Flags.bInConfigMode = FALSE;
-	}
-	#endif
-	
-
-    #if defined (STACK_USE_AUTO_IP)
-    AutoIPTasks();
-    #endif
 
 	#if defined(STACK_USE_TCP)
 	// Perform all TCP time related tasks (retransmit, send acknowledge, close connection, etc)
@@ -373,28 +247,9 @@ void StackTask(void)
 				#if defined(STACK_USE_ICMP_SERVER) || defined(STACK_USE_ICMP_CLIENT)
 				if(cIPFrameType == IP_PROT_ICMP)
 				{
-					#if defined(STACK_USE_IP_GLEANING)
-					if(AppConfig.Flags.bInConfigMode && AppConfig.Flags.bIsDHCPEnabled)
-					{
-						// According to "IP Gleaning" procedure,
-						// when we receive an ICMP packet with a valid
-						// IP address while we are still in configuration
-						// mode, accept that address as ours and conclude
-						// configuration mode.
-						if(tempLocalIP.Val != 0xffffffff)
-						{
-							AppConfig.Flags.bInConfigMode = FALSE;
-							AppConfig.MyIPAddr = tempLocalIP;
-						}
-					}
-					#endif
-
 					// Process this ICMP packet if it the destination IP address matches our address or one of the broadcast IP addressees
 					if( (tempLocalIP.Val == AppConfig.MyIPAddr.Val) ||
 						(tempLocalIP.Val == 0xFFFFFFFF) ||
-#if defined(STACK_USE_ZEROCONF_LINK_LOCAL) || defined(STACK_USE_ZEROCONF_MDNS_SD)
-                                                (tempLocalIP.Val == 0xFB0000E0) ||
-#endif
 						(tempLocalIP.Val == ((AppConfig.MyIPAddr.Val & AppConfig.MyMask.Val) | ~AppConfig.MyMask.Val)))
 					{
 						ICMPProcess(&remoteNode, dataCount);
@@ -443,18 +298,6 @@ void StackTask(void)
  ********************************************************************/
 void StackApplications(void)
 {
-	#if defined(STACK_USE_HTTP2_SERVER)
-	HTTPServer();
-	#endif
-	
-	#if defined(STACK_USE_FTP_SERVER) && defined(STACK_USE_MPFS2)
-	FTPServer();
-	#endif
-	
-	#if defined(STACK_USE_SNMP_SERVER)
-	SNMPTask();
-	#endif
-	
 	#if defined(STACK_USE_ANNOUNCE)
 	DiscoveryTask();
 	#endif
@@ -463,55 +306,11 @@ void StackApplications(void)
 	NBNSTask();
 	#endif
 	
-	#if defined(STACK_USE_DHCP_SERVER)
-	DHCPServerTask();
-	#endif
-	
-	#if defined(STACK_USE_DNS_SERVER)
-	DNSServerTask();
-	#endif
-	
-	#if defined (STACK_USE_DYNAMICDNS_CLIENT)
-	DDNSTask();
-	#endif
-	
-	#if defined(STACK_USE_TELNET_SERVER)
-	TelnetTask();
-	#endif
-	
-	#if defined(STACK_USE_REBOOT_SERVER)
-	RebootTask();
-	#endif
-	
-	#if defined(STACK_USE_SNTP_CLIENT)
-	SNTPClient();
-	#endif
-	
-	#if defined(STACK_USE_UDP_PERFORMANCE_TEST)
-	UDPPerformanceTask();
-	#endif
-	
-	#if defined(STACK_USE_TCP_PERFORMANCE_TEST)
-	TCPPerformanceTask();
-	#endif
-	
-	#if defined(STACK_USE_SMTP_CLIENT)
-	SMTPTask();
-	#endif
-	
 	#if defined(STACK_USE_UART2TCP_BRIDGE)
 	UART2TCPBridgeTask();
 	#endif
 }
 
-#if defined(WF_CS_TRIS) && defined(STACK_USE_DHCP_CLIENT)
-void RenewDhcp(void)
-{
-    g_DhcpRenew = TRUE;
-    SetDhcpProgressState();
-}    
-    
-#endif
 
 
 

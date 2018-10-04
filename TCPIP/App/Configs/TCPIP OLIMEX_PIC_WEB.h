@@ -63,35 +63,35 @@
  */
 #define STACK_USE_UART					// Application demo using UART for IP address display and stack configuration
 #define STACK_USE_UART2TCP_BRIDGE		// UART to TCP Bridge application example
-//#define STACK_USE_IP_GLEANING
+//181004a1PermanenceDelete_/#define STACK_USE_IP_GLEANING
 //180920a2#define STACK_USE_ICMP_SERVER			// Ping query and response capability
 #define STACK_USE_ICMP_CLIENT			// Ping transmission capability
-//180913a3#define STACK_USE_HTTP2_SERVER			// New HTTP server with POST, Cookies, Authentication, etc.
-//#define STACK_USE_SSL_SERVER			// SSL server socket support (Requires SW300052)
-//#define STACK_USE_SSL_CLIENT			// SSL client socket support (Requires SW300052)
-//180913a2#define STACK_USE_AUTO_IP               // Dynamic link-layer IP address automatic configuration protocol
-//180913a2#define STACK_USE_DHCP_CLIENT			// Dynamic Host Configuration Protocol client for obtaining IP address and other parameters
-//180913a2#define STACK_USE_DHCP_SERVER			// Single host DHCP server
-//#define STACK_USE_FTP_SERVER			// File Transfer Protocol (old)
-//180913a1#define STACK_USE_SMTP_CLIENT			// Simple Mail Transfer Protocol for sending email
-//#define STACK_USE_SNMP_SERVER			// Simple Network Management Protocol v2C Community Agent
-//#define STACK_USE_SNMPV3_SERVER			// Simple Network Management Protocol v3 Agent
-//#define STACK_USE_TFTP_CLIENT			// Trivial File Transfer Protocol client
-//180912a6#define STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE	// HTTP Client example in GenericTCPClient.c
-//180912a6#define STACK_USE_GENERIC_TCP_SERVER_EXAMPLE	// ToUpper server example in GenericTCPServer.c
-//180912a5#define STACK_USE_TELNET_SERVER			// Telnet server
+//181003b1PermanenceDelete_/180913a3#define STACK_USE_HTTP2_SERVER			// New HTTP server with POST, Cookies, Authentication, etc.
+//181003g6PermanenceDelete_/#define STACK_USE_SSL_SERVER			// SSL server socket support (Requires SW300052)
+//181003g7PermanenceDelete_/#define STACK_USE_SSL_CLIENT			// SSL client socket support (Requires SW300052)
+//181003d1PermanenceDelete_/180913a2#define STACK_USE_AUTO_IP               // Dynamic link-layer IP address automatic configuration protocol
+//181003c2PermanenceDelete_/180913a2#define STACK_USE_DHCP_CLIENT			// Dynamic Host Configuration Protocol client for obtaining IP address and other parameters
+//181003c1PermanenceDelete_/180913a2#define STACK_USE_DHCP_SERVER			// Single host DHCP server
+//181004a2PermanenceDelete_/#define STACK_USE_FTP_SERVER			// File Transfer Protocol (old)
+//181003e1PermanenceDelete_/180913a1#define STACK_USE_SMTP_CLIENT			// Simple Mail Transfer Protocol for sending email
+//181004a3PermanenceDelete_/#define STACK_USE_SNMP_SERVER			// Simple Network Management Protocol v2C Community Agent
+//181004a4PermanenceDelete_/#define STACK_USE_SNMPV3_SERVER			// Simple Network Management Protocol v3 Agent
+//181004a5PermanenceDelete_/#define STACK_USE_TFTP_CLIENT			// Trivial File Transfer Protocol client
+//181003f1PermanenceDelete_/180912a6#define STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE	// HTTP Client example in GenericTCPClient.c
+//181003f2PermanenceDelete_/180912a6#define STACK_USE_GENERIC_TCP_SERVER_EXAMPLE	// ToUpper server example in GenericTCPServer.c
+//181003g1PermanenceDelete_/180912a5#define STACK_USE_TELNET_SERVER			// Telnet server
 #define STACK_USE_ANNOUNCE				// Microchip Embedded Ethernet Device Discoverer server/client
 #define STACK_USE_DNS					// Domain Name Service Client for resolving hostname strings to IP addresses
-//#define STACK_USE_DNS_SERVER			// Domain Name Service Server for redirection to the local device
+//181004a6PermanenceDelete_/#define STACK_USE_DNS_SERVER			// Domain Name Service Server for redirection to the local device
 #define STACK_USE_NBNS					// NetBIOS Name Service Server for repsonding to NBNS hostname broadcast queries
-//180912a4#define STACK_USE_REBOOT_SERVER			// Module for resetting this PIC remotely.  Primarily useful for a Bootloader.
-//180912a3#define STACK_USE_SNTP_CLIENT			// Simple Network Time Protocol for obtaining current date/time from Internet
-//#define STACK_USE_UDP_PERFORMANCE_TEST	// Module for testing UDP TX performance characteristics.  NOTE: Enabling this will cause a huge amount of UDP broadcast packets to flood your network on the discard port.  Use care when enabling this on production networks, especially with VPNs (could tunnel broadcast traffic across a limited bandwidth connection).
-//180912a2#define STACK_USE_TCP_PERFORMANCE_TEST	// Module for testing TCP TX performance characteristics
-//#define STACK_USE_DYNAMICDNS_CLIENT		// Dynamic DNS client updater module
-//180912a1#define STACK_USE_BERKELEY_API			// Berekely Sockets APIs are available
-//#define STACK_USE_ZEROCONF_LINK_LOCAL	// Zeroconf IPv4 Link-Local Addressing
-//#define STACK_USE_ZEROCONF_MDNS_SD		// Zeroconf mDNS and mDNS service discovery
+//181003g2PermanenceDelete_/180912a4#define STACK_USE_REBOOT_SERVER			// Module for resetting this PIC remotely.  Primarily useful for a Bootloader.
+//181003g3PermanenceDelete_/180912a3#define STACK_USE_SNTP_CLIENT			// Simple Network Time Protocol for obtaining current date/time from Internet
+//181003g5PermanenceDelete_/#define STACK_USE_UDP_PERFORMANCE_TEST	// Module for testing UDP TX performance characteristics.  NOTE: Enabling this will cause a huge amount of UDP broadcast packets to flood your network on the discard port.  Use care when enabling this on production networks, especially with VPNs (could tunnel broadcast traffic across a limited bandwidth connection).
+//181003g4PermanenceDelete_/180912a2#define STACK_USE_TCP_PERFORMANCE_TEST	// Module for testing TCP TX performance characteristics
+//181004a7PermanenceDelete_/#define STACK_USE_DYNAMICDNS_CLIENT		// Dynamic DNS client updater module
+//181004a8PermanenceDelete_/180912a1#define STACK_USE_BERKELEY_API			// Berekely Sockets APIs are available
+//181004a9PermanenceDelete_/#define STACK_USE_ZEROCONF_LINK_LOCAL	// Zeroconf IPv4 Link-Local Addressing
+//181004a10PermanenceDelete_/#define STACK_USE_ZEROCONF_MDNS_SD		// Zeroconf mDNS and mDNS service discovery
 //
 // -- oc2k define start from here
 #define __fixedAsciiDATE		"Sep 09 2018" //" 09/09/2018 " 
@@ -105,7 +105,7 @@
  *   applications.  If your custom application requires it
  *   otherwise, uncomment the appropriate selection.
  */
-//180914a5#define STACK_USE_MPFS2
+//181003a1PermanenceDelete_/180914a5#define STACK_USE_MPFS2
 
 /* MPFS Storage Location
  *   If html pages are stored in internal program memory,
@@ -307,19 +307,6 @@
 #define UDP_USE_TX_CHECKSUM		// This slows UDP TX performance by nearly 50%, except when using the ENCX24J600 or PIC32MX6XX/7XX, which have a super fast DMA and incurs virtually no speed pentalty.
 
 
-/* Berkeley API Sockets Configuration
- *   Note that each Berkeley socket internally uses one TCP or UDP socket
- *   defined by MAX_UDP_SOCKETS and the TCPSocketInitializer[] array.
- *   Therefore, this number MUST be less than or equal to MAX_UDP_SOCKETS + the
- *   number of TCP sockets defined by the TCPSocketInitializer[] array
- *   (i.e. sizeof(TCPSocketInitializer)/sizeof(TCPSocketInitializer[0])).
- *   This define has no effect if STACK_USE_BERKELEY_API is not defined and
- *   Berkeley Sockets are disabled.  Set this value as low as your application
- *   requires to avoid waisting RAM.
- */
-#define BSD_SOCKET_COUNT (5u)
-
-
 // =======================================================================
 //   Application-Specific Options
 // =======================================================================
@@ -361,12 +348,6 @@
 
 	//#define HTTP_NO_AUTH_WITHOUT_SSL		// Uncomment to require SSL before requesting a password
 
-    // Define the listening port for the HTTP server
-  	#define HTTP_PORT               (80u)
-	
-    // Define the listening port for the HTTPS server (if STACK_USE_SSL_SERVER is enabled)
-	#define HTTPS_PORT				(443u)
-	
     // Define the maximum data length for reading cookie and GET/POST arguments (bytes)
 	#define HTTP_MAX_DATA_LEN		(100u)
 	
@@ -375,7 +356,7 @@
 
 	#define STACK_USE_HTTP_APP_RECONFIG		// Use the AppConfig web page in the Demo App (~2.5kb ROM, ~0b RAM)
 	#define STACK_USE_HTTP_MD5_DEMO			// Use the MD5 Demo web page (~5kb ROM, ~160b RAM)
-	//180913a1	#define STACK_USE_HTTP_EMAIL_DEMO		// Use the e-mail demo web page
+	//181003e2PermanenceDelete_/180913a1	#define STACK_USE_HTTP_EMAIL_DEMO		// Use the e-mail demo web page
 
 // -- SSL Options --------------------------------------------------------
 
@@ -391,45 +372,10 @@
 	#define SSL_RSA_KEY_SIZE		(512ul)
 
 
-// -- Telnet Options -----------------------------------------------------
-
-	// Number of simultaneously allowed Telnet sessions.  Note that you
-	// must have an equal number of TCP_PURPOSE_TELNET type TCP sockets
-	// declared in the TCPSocketInitializer[] array above for multiple
-	// connections to work.  If fewer sockets are available than this
-	// definition, then the the lesser of the two quantities will be the
-	// actual limit.
-	#define MAX_TELNET_CONNECTIONS	(1u)
-
-	// Default local listening port for the Telnet server.  Port 23 is the
-	// protocol default.
-	#define TELNET_PORT				23
-
-	// Default local listening port for the Telnet server when SSL secured.
-	// Port 992 is the telnets protocol default.
-	#define TELNETS_PORT			992
-
-	// Force all connecting clients to be SSL secured and connected via
-	// TELNETS_PORT.  Connections on port TELNET_PORT will be ignored.  If
-	// STACK_USE_SSL_SERVER is undefined, this entire setting is ignored
-	// (server will accept unsecured connections on TELNET_PORT and won't even
-	// listen on TELNETS_PORT).
-	//#define TELNET_REJECT_UNSECURED
-
-	// Default username and password required to login to the Telnet server.
-	#define TELNET_USERNAME			"admin"
-	#define TELNET_PASSWORD			"microchip"
-
-
 // -- SNMP Options -------------------------------------------------------
 
 	// Comment following line if SNMP TRAP support is needed
 	//#define SNMP_TRAP_DISABLED
-
-	//#define SNMP_STACK_USE_V2_TRAP
-	#if defined(STACK_USE_SNMPV3_SERVER)
-		#define SNMP_V1_V2_TRAP_WITH_SNMPV3
-	#endif
 
 	// This is the maximum length for community string.
 	// Application must ensure that this length is observed.

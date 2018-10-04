@@ -594,9 +594,6 @@ TCP_SOCKET TCPOpen(DWORD dwRemoteHost, BYTE vRemoteHostType, WORD wPort, BYTE vS
 			MyTCBStub.Flags.bServer = TRUE;
 			MyTCBStub.smState = TCP_LISTEN;
 			MyTCBStub.remoteHash.Val = wPort;
-			#if defined(STACK_USE_SSL_SERVER)
-			MyTCB.localSSLPort.Val = 0;
-			#endif
 		}
 		// Handle all the client mode socket types
 		else
@@ -2406,21 +2403,10 @@ void TCPTick(void)
 						break;
 					
 					// Stop searching if this SYN queue entry can be used by this socket
-					#if defined(STACK_USE_SSL_SERVER)
-					if(SYNQueue[w].wDestPort == MyTCBStub.remoteHash.Val || SYNQueue[w].wDestPort == MyTCBStub.sslTxHead)
-					#else
 					if(SYNQueue[w].wDestPort == MyTCBStub.remoteHash.Val)
-					#endif
 					{
 						// Set up our socket and generate a reponse SYN+ACK packet
 						SyncTCB();
-						
-						#if defined(STACK_USE_SSL_SERVER)
-						// If this matches the SSL port, make sure that can be configured
-						// before continuing.  If not, break and leave this in the queue
-						if(SYNQueue[w].wDestPort == MyTCBStub.sslTxHead && !TCPStartSSLServer(hTCP))
-							break;
-						#endif
 						
 						memcpy((void*)&MyTCB.remote.niRemoteMACIP, (void*)&SYNQueue[w].niSourceAddress, sizeof(NODE_INFO));
 						MyTCB.remotePort.Val = SYNQueue[w].wSourcePort;
@@ -3208,13 +3194,6 @@ static BOOL FindMatchingSocket(TCP_HEADER* h, NODE_INFO* remote)
 			if(MyTCBStub.remoteHash.Val == h->DestPort)
 				partialMatch = hTCP;
 			
-			#if defined(STACK_USE_SSL_SERVER)
-			// Check the SSL port as well for SSL Servers
-			// 0 is defined as an invalid port number
-			if(MyTCBStub.sslTxHead == h->DestPort)
-				partialMatch = hTCP;
-			#endif
-			
 			continue;
 		}
 		else if(MyTCBStub.remoteHash.Val != hash)
@@ -3240,17 +3219,6 @@ static BOOL FindMatchingSocket(TCP_HEADER* h, NODE_INFO* remote)
 	{
 		SyncTCBStub(partialMatch);
 		SyncTCB();
-	
-		// For SSL ports, begin the SSL Handshake
-		#if defined(STACK_USE_SSL_SERVER)
-		if(MyTCBStub.sslTxHead == h->DestPort)
-		{
-			// Try to start an SSL session.  If no stubs are available,
-			// we can't service this request right now, so ignore it.
-			if(!TCPStartSSLServer(partialMatch))
-				partialMatch = INVALID_SOCKET;
-		}
-		#endif
 	
 		// Make sure the above check didn't fail (this is unfortunately 
 		// redundant for non-SSL sockets).  Otherwise, fall out to below
@@ -3317,11 +3285,7 @@ static BOOL FindMatchingSocket(TCP_HEADER* h, NODE_INFO* remote)
 				continue;
 
 			SyncTCB();
-			#if defined(STACK_USE_SSL_SERVER)
-			if((MyTCB.localPort.Val != h->DestPort) && (MyTCB.localSSLPort.Val != h->DestPort))
-			#else
 			if(MyTCB.localPort.Val != h->DestPort)
-			#endif
 				continue;
 
 			// Generate the SYN queue entry
@@ -3434,10 +3398,6 @@ static void CloseSocket(void)
 	MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
 	#endif
 	
-	#if defined(STACK_USE_SSL_SERVER)
-	MyTCBStub.sslTxHead = MyTCB.localSSLPort.Val;
-	#endif
-
 	MyTCB.flags.bFINSent = 0;
 	MyTCB.flags.bSYNSent = 0;
 	MyTCB.flags.bRXNoneACKed1 = 0;
@@ -4708,239 +4668,6 @@ static void TCPRAMCopyROM(PTR_BASE wDest, BYTE wDestType, ROM BYTE* wSource, WOR
 	SSL Functions
   ***************************************************************************/
 
-/*****************************************************************************
-  Function:
-	BOOL TCPStartSSLClient(TCP_SOCKET hTCP, BYTE* host)
-
-  Summary:
-	Begins an SSL client session.
-
-  Description:
-	This function escalates the current connection to an SSL secured 
-	connection by initiating an SSL client handshake.
-
-  Precondition:
-	TCP is initialized and hTCP is already connected.
-
-  Parameters:
-	hTCP		- TCP connection to secure
-	host		- Expected host name on certificate (currently ignored)
-
-  Return Values:
-	TRUE 		- an SSL connection was initiated
-	FALSE 		- Insufficient SSL resources (stubs) were available
-
-  Remarks:
-	The host parameter is currently ignored and is not validated.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL_CLIENT)
-BOOL TCPStartSSLClient(TCP_SOCKET hTCP, BYTE* host)
-{
-	BYTE i;
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	
-	// Make sure SSL is not established already
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-		return FALSE;
-	
-	// Try to start the session
-	MyTCBStub.sslStubID = SSLStartSession(hTCP, NULL, 0);
-	
-	// Make sure a session stub was obtained
-	if(MyTCBStub.sslStubID == SSL_INVALID_ID)
-		return FALSE;
-
-	// Mark connection as handshaking and return
-	MyTCBStub.sslReqMessage = SSL_CLIENT_HELLO;
-	MyTCBStub.sslRxHead = MyTCBStub.rxHead;
-	MyTCBStub.sslTxHead = MyTCBStub.txHead;
-	MyTCBStub.Flags.bSSLHandshaking = 1;
-	for(i = 0; i < 5u; i++)
-	{// Skip first 5 bytes in TX for the record header
-		if(++MyTCBStub.sslTxHead >= MyTCBStub.bufferRxStart)
-			MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-	}
-	return TRUE;
-}
-#endif // SSL Client
-
-/*****************************************************************************
-  Function:
-	BOOL TCPStartSSLClientEx(TCP_SOCKET hTCP, BYTE* host, BYTE * buffer, BYTE suppDataType)
-
-  Summary:
-	Begins an SSL client session.
-
-  Description:
-	This function escalates the current connection to an SSL secured 
-	connection by initiating an SSL client handshake.
-
-  Precondition:
-	TCP is initialized and hTCP is already connected.
-
-  Parameters:
-	hTCP			- TCP connection to secure
-	host			- Expected host name on certificate (currently ignored)
-	buffer      	- Buffer for supplementary data return
-	suppDataType 	- Type of supplementary data to copy
-
-  Return Values:
-	TRUE 		- an SSL connection was initiated
-	FALSE 		- Insufficient SSL resources (stubs) were available
-
-  Remarks:
-	The host parameter is currently ignored and is not validated.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL_CLIENT)
-BOOL TCPStartSSLClientEx(TCP_SOCKET hTCP, BYTE* host, void * buffer, BYTE suppDataType)
-{
-	BYTE i;
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	
-	// Make sure SSL is not established already
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-		return FALSE;
-	
-	// Try to start the session
-	MyTCBStub.sslStubID = SSLStartSession(hTCP, buffer, suppDataType);
-	
-	// Make sure a session stub was obtained
-	if(MyTCBStub.sslStubID == SSL_INVALID_ID)
-		return FALSE;
-
-	// Mark connection as handshaking and return
-	MyTCBStub.sslReqMessage = SSL_CLIENT_HELLO;
-	MyTCBStub.sslRxHead = MyTCBStub.rxHead;
-	MyTCBStub.sslTxHead = MyTCBStub.txHead;
-	MyTCBStub.Flags.bSSLHandshaking = 1;
-	for(i = 0; i < 5u; i++)
-	{// Skip first 5 bytes in TX for the record header
-		if(++MyTCBStub.sslTxHead >= MyTCBStub.bufferRxStart)
-			MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-	}
-	return TRUE;
-}
-#endif // SSL Client
-
-/*****************************************************************************
-  Function:
-	BOOL TCPStartSSLServer(TCP_SOCKET hTCP)
-
-  Summary:
-	Begins an SSL server session.
-
-  Description:
-	This function sets up an SSL server session when a new connection is
-	established on an SSL port.
-
-  Precondition:
-	TCP is initialized and hTCP is already connected.
-
-  Parameters:
-	hTCP		- TCP connection to secure
-
-  Return Values:
-	TRUE		- an SSL connection was initiated
-	FALSE		- Insufficient SSL resources (stubs) were available
-  ***************************************************************************/
-#if defined(STACK_USE_SSL_SERVER)
-BOOL TCPStartSSLServer(TCP_SOCKET hTCP)
-{
-	BYTE i;
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	SyncTCB();
-	
-	// Make sure SSL is not established already
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-		return TRUE;
-	
-	// Try to start the session
-	MyTCBStub.sslStubID = SSLStartSession(hTCP, NULL, 0);
-	
-	// Make sure a session stub was obtained
-	if(MyTCBStub.sslStubID == SSL_INVALID_ID)
-		return FALSE;
-
-	// Swap the localPort and localSSLPort
-	MyTCBStub.remoteHash.Val = MyTCB.localPort.Val;
-	MyTCB.localPort.Val = MyTCB.localSSLPort.Val;
-	MyTCB.localSSLPort.Val = MyTCBStub.remoteHash.Val;	
-
-	// Mark connection as handshaking and return
-	MyTCBStub.sslReqMessage = SSL_NO_MESSAGE;
-	MyTCBStub.sslRxHead = MyTCBStub.rxHead;
-	MyTCBStub.sslTxHead = MyTCBStub.txHead;
-	MyTCBStub.Flags.bSSLHandshaking = 1;
-	for(i = 0; i < 5u; i++)
-	{// Skip first 5 bytes in TX for the record header
-		if(++MyTCBStub.sslTxHead >= MyTCBStub.bufferRxStart)
-			MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-	}
-	return TRUE;
-}
-#endif // SSL Client
-
-/*****************************************************************************
-  Function:
-	BOOL TCPAddSSLListener(TCP_SOCKET hTCP, WORD port)
-
-  Summary:
-	Listens for SSL connection on a specific port.
-
-  Description:
-	This function adds an additional listening port to a TCP connection.  
-	Connections made on this alternate port will be secured via SSL.
-
-  Precondition:
-	TCP is initialized and hTCP is listening.
-
-  Parameters:
-	hTCP		- TCP connection to secure
-	port		- SSL port to listen on
-
-  Return Values:
-	TRUE		- SSL port was added.
-	FALSE		- The socket was not a listening socket.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL_SERVER)
-BOOL TCPAddSSLListener(TCP_SOCKET hTCP, WORD port)
-{
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	
-	if(MyTCBStub.smState != TCP_LISTEN)
-		return FALSE;
-	
-	SyncTCB();
-	
-	MyTCB.localSSLPort.Val = port;
-	MyTCBStub.sslTxHead = port;
-
-	return TRUE;
-}
-#endif // SSL Server
 
 /*****************************************************************************
   Function:

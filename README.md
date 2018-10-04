@@ -26,22 +26,33 @@ Pic18a1(f67j60)TCPIP__180923b
 	| __PIC24*|Processed|exclude compiler.h
 	| __PIC32*|Processed|exclude compiler.h
 	| __dsPIC33*|Processed|exclude compiler.h
-	| STACK_USE_MPFS2
-	| STACK_USE_HTTP2_SERVER
-	| STACK_USE_DHCP_SERVER
-	| STACK_USE_DHCP_CLIENT
-	| STACK_USE_AUTO_IP
-	| STACK_USE_SMTP_CLIENT
-	| STACK_USE_HTTP_EMAIL_DEMO
-	| STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE
-	| STACK_USE_GENERIC_TCP_SERVER_EXAMPLE
-	| STACK_USE_TELNET_SERVER
-	| STACK_USE_REBOOT_SERVER
-	| STACK_USE_SNTP_CLIENT
-	| STACK_USE_TCP_PERFORMANCE_TEST
-	| STACK_USE_UDP_PERFORMANCE_TEST
-	| STACK_USE_SSL_SERVER
-	| STACK_USE_ICMP_SERVER
+	| STACK_USE_MPFS2|181003a1PermanenceDelete|Keep uncomment permanence delete in TCPIP ***.h
+	| STACK_USE_HTTP2_SERVER|181003b1PermanenceDelete|Keep uncomment permanence delete in TCPIP ***.h and undef HTTP_**
+	| STACK_USE_DHCP_SERVER|181003c1PermanenceDelete|see above
+	| STACK_USE_DHCP_CLIENT|181003c2PermanenceDelete|see above
+	| STACK_USE_AUTO_IP|181003d1PermanenceDelete|see above
+	| STACK_USE_SMTP_CLIENT|181003e1PermanenceDelete|see above
+	| STACK_USE_HTTP_EMAIL_DEMO|181003e2PermanenceDelete|see above
+	| STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE|181003f1PermanenceDelete|see above
+	| STACK_USE_GENERIC_TCP_SERVER_EXAMPLE|181003f2PermanenceDelete|see above
+	| STACK_USE_TELNET_SERVER|181003g1PermanenceDelete|see above
+	| STACK_USE_REBOOT_SERVER|181003g2PermanenceDelete|see above
+	| STACK_USE_SNTP_CLIENT|181003g3PermanenceDelete|see above
+	| STACK_USE_TCP_PERFORMANCE_TEST|181003g4PermanenceDelete|see above
+	| STACK_USE_UDP_PERFORMANCE_TEST|181003g5PermanenceDelete|see above
+	| STACK_USE_SSL_SERVER|181003g6PermanenceDelete|see above
+	| STACK_USE_SSL_CLIENT|181003g7PermanenceDelete|see above
+	| STACK_USE_IP_GLEANING|181004a1PermanenceDelete|see above
+	| STACK_USE_ICMP_SERVER||keep reason:STACK_USE_ICMP_CLIENT is still using
+	| STACK_USE_FTP_SERVER|181004a2PermanenceDelete|see above
+	| STACK_USE_SNMP_SERVER|181004a3PermanenceDelete|see above
+	| STACK_USE_SNMPV3_SERVER|181004a4PermanenceDelete|see above
+	| STACK_USE_TFTP_CLIENT|181004a5PermanenceDelete|see above
+	| STACK_USE_DNS_SERVER|181004a6PermanenceDelete|see above
+	| STACK_USE_DYNAMICDNS_CLIENT|181004a7PermanenceDelete|see above
+	| STACK_USE_BERKELEY_API|181004a8PermanenceDelete|see above
+	| STACK_USE_ZEROCONF_LINK_LOCAL|181004a9PermanenceDelete|see above
+	| STACK_USE_ZEROCONF_MDNS_SD|181004a10PermanenceDelete|see above
 
 ---------------
 #### closed task record

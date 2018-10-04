@@ -91,51 +91,11 @@
  *   on configurations selected in TCPIPConfig.h
  *******************************************************************/
 
-#ifndef STACK_USE_MDD
-
-	
-	
-	#if defined(STACK_USE_HTTP2_SERVER) || defined(STACK_USE_FTP_SERVER)
-	#warning "noted the MPFS2 no use"	//	#define STACK_USE_MPFS2
-	#endif
-
-	#if defined(STACK_USE_SNMPV3_SERVER) && !defined (STACK_USE_SNMP_SERVER)
-	#warning "noted the SNMP server no defines"	//	#define STACK_USE_SNMP_SERVER
-	#endif
-
-	#if defined(STACK_USE_SNMP_SERVER) //&& !defined(STACK_USE_MPFS) && !defined(STACK_USE_MPFS2)
-	#warning "noted the MPFS2 no use"	//	#define STACK_USE_MPFS2
-	#endif
-
-	#if defined(STACK_USE_SNMP_SERVER) && defined (STACK_USE_SNMPV3_SERVER)
-		#define STACK_USE_MD5
-		#define STACK_USE_SHA1
-	#endif
-#endif
-	
-	// FTP is not supported in MPFS2 or when MPFS is stored in internal program 
-	// memory (instead of external EEPROM).
-	#if ( (!defined(MPFS_USE_EEPROM) && !defined(MPFS_USE_SPI_FLASH)) || defined(STACK_USE_MPFS2) ) && defined(STACK_USE_FTP)
-		#error FTP server is not supported with HTTP2 / MPFS2, or with internal Flash memory storage
-	#endif
-	
 	// When IP Gleaning is enabled, ICMP must also be enabled.
-	#if defined(STACK_USE_IP_GLEANING)
-	    #if !defined(STACK_USE_ICMP_SERVER)
-	        #define STACK_USE_ICMP_SERVER
-	    #endif
-	#endif
-	
 	// Include modules required by specific HTTP demos
 	#if !defined(STACK_USE_HTTP2_SERVER)
-		#undef STACK_USE_HTTP_EMAIL_DEMO
 		#undef STACK_USE_HTTP_MD5_DEMO
 		#undef STACK_USE_HTTP_APP_RECONFIG
-	#endif
-	#if defined(STACK_USE_HTTP_EMAIL_DEMO)
-		#if !defined(STACK_USE_SMTP_CLIENT)
-			#error HTTP E-mail Demo requires SMTP_CLIENT and HTTP2
-		#endif
 	#endif
 	#if defined(STACK_USE_HTTP_MD5_DEMO)
 		#if !defined(STACK_USE_MD5)
@@ -151,11 +111,7 @@
 	#endif
 	
 	// Make sure that the DNS client is enabled if services require it
-	#if defined(STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE) || \
-		defined(STACK_USE_SNTP_CLIENT) || \
-		defined(STACK_USE_DYNAMICDNS_CLIENT) || \
-		defined(STACK_USE_SMTP_CLIENT) || \
-		defined(STACK_USE_AUTOUPDATE_TCPCLIENT)
+	#if defined(STACK_USE_AUTOUPDATE_TCPCLIENT)
 	    #if !defined(STACK_USE_DNS)
 	        #define STACK_USE_DNS
 	    #endif
@@ -163,18 +119,8 @@
 	
 	// Make sure that STACK_CLIENT_MODE is defined if a service 
 	// depends on it
-	#if defined(STACK_USE_FTP_SERVER) || \
-		defined(STACK_USE_SNMP_SERVER) || \
-		defined(STACK_USE_DNS) || \
-		defined(STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE) || \
-		defined(STACK_USE_TFTP_CLIENT) || \
-		defined(STACK_USE_SMTP_CLIENT) || \
-		defined(STACK_USE_ICMP_CLIENT) || \
-		defined(STACK_USE_DYNAMICDNS_CLIENT) || \
-		defined(STACK_USE_SNTP_CLIENT) || \
-		defined(STACK_USE_BERKELEY_API) || \
-		defined(STACK_USE_SSL_CLIENT) || \
-        defined(STACK_USE_AUTO_IP)
+	#if defined(STACK_USE_DNS) || \
+		defined(STACK_USE_ICMP_CLIENT)
 		#if !defined(STACK_CLIENT_MODE)
 		    #define STACK_CLIENT_MODE
 		#endif
@@ -182,18 +128,7 @@
 	
 	// Make sure that STACK_USE_TCP is defined if a service 
 	// depends on it
-	#if defined(STACK_USE_UART2TCP_BRIDGE) || \
-		defined(STACK_USE_HTTP2_SERVER) || \
-		defined(STACK_USE_FTP_SERVER) || \
-		defined(STACK_USE_TELNET_SERVER) || \
-		defined(STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE) || \
-		defined(STACK_USE_GENERIC_TCP_SERVER_EXAMPLE) || \
-		defined(STACK_USE_SMTP_CLIENT) || \
-		defined(STACK_USE_TCP_PERFORMANCE_TEST) || \
-		defined(STACK_USE_DYNAMICDNS_CLIENT) || \
-		defined(STACK_USE_BERKELEY_API) || \
-		defined(STACK_USE_SSL_CLIENT) || \
-		defined(STACK_USE_SSL_SERVER)
+	#if defined(STACK_USE_UART2TCP_BRIDGE)
 	    #if !defined(STACK_USE_TCP)
 	        #define STACK_USE_TCP
 	    #endif
@@ -221,31 +156,12 @@
 	
 	// Make sure that STACK_USE_UDP is defined if a service 
 	// depends on it
-	#if defined(STACK_USE_DHCP_CLIENT) || \
-		defined(STACK_USE_DHCP_SERVER) || \
-		defined(STACK_USE_DNS) || \
+	#if defined(STACK_USE_DNS) || \
 		defined(STACK_USE_NBNS) || \
-		defined(STACK_USE_SNMP_SERVER) || \
-		defined(STACK_USE_TFTP_CLIENT) || \
-		defined(STACK_USE_ANNOUNCE) || \
-		defined(STACK_USE_UDP_PERFORMANCE_TEST) || \
-		defined(STACK_USE_SNTP_CLIENT) || \
-		defined(STACK_USE_BERKELEY_API)
+		defined(STACK_USE_ANNOUNCE)
 	    #if !defined(STACK_USE_UDP)
 	        #define STACK_USE_UDP
 	    #endif
-	#endif
-
-	// When using SSL server, enable RSA decryption
-	#if defined(STACK_USE_SSL_SERVER)
-		#define STACK_USE_RSA_DECRYPT
-	#warning "no selected SSL on server" //	#define STACK_USE_SSL
-	#endif
-	
-	// When using SSL client, enable RSA encryption
-	#if defined(STACK_USE_SSL_CLIENT)
-		#define STACK_USE_RSA_ENCRYPT
-	#warning "no selected SSL on client" //	#define STACK_USE_SSL
 	#endif
 
 	// If using SSL (either), include the rest of the support modules
@@ -267,18 +183,6 @@
 	#warning "no use LCD as decide"	// #define USE_LCD
 	#endif
 	
-	// SPI Flash MPFS images must start on a block boundary
-	#if (defined(STACK_USE_MPFS2)) && \
-		defined(MPFS_USE_SPI_FLASH) && ((MPFS_RESERVE_BLOCK & 0x0fff) != 0)
-		#error MPFS_RESERVE_BLOCK must be a multiple of 4096 for SPI Flash storage
-	#endif
-	
-	// HTTP2 requires 2 MPFS2 handles per connection, plus one spare
-	#if defined(STACK_USE_HTTP2_SERVER)
-		#if MAX_MPFS_HANDLES < ((MAX_HTTP_CONNECTIONS * 2) + 1)
-			#error HTTP2 requires 2 MPFS2 file handles per connection, plus one additional.
-		#endif
-	#endif
 
 #include "TCPIP Stack/StackTsk.h"
 #include "TCPIP Stack/Helpers.h"
@@ -298,10 +202,6 @@
 
 #if defined(STACK_USE_ARCFOUR)
 	#include "TCPIP Stack/ARCFOUR.h"
-#endif
-
-#if defined(STACK_USE_AUTO_IP)
-    #include "TCPIP Stack/AutoIP.h"
 #endif
 
 #if defined(STACK_USE_RANDOM)
@@ -324,10 +224,6 @@
 	#include "TCPIP Stack/TCP.h"
 #endif
 
-#if defined(STACK_USE_BERKELEY_API)
-	#include "TCPIP Stack/BerkeleyAPI.h"
-#endif
-
 #if defined(USE_LCD)
 	#include "TCPIP Stack/LCDBlocking.h"
 #endif
@@ -340,30 +236,8 @@
 	#include "TCPIP Stack/UART.h"
 #endif
 
-#if defined(STACK_USE_DHCP_CLIENT) || defined(STACK_USE_DHCP_SERVER)
-	#include "TCPIP Stack/DHCP.h"
-#endif
-
-#if defined(STACK_USE_DNS) || defined(STACK_USE_DNS_SERVER)
+#if defined(STACK_USE_DNS)
 	#include "TCPIP Stack/DNS.h"
-#endif
-
-#if defined(STACK_USE_MPFS2)
-	#include "TCPIP Stack/MPFS2.h"
-#endif
-
-#if defined(STACK_USE_FTP_SERVER)
-	#include "TCPIP Stack/FTP.h"
-#endif
-
-
-#if defined(STACK_USE_HTTP2_SERVER)
-	#ifdef STACK_USE_MDD
-		#include "TCPIP Stack/FileSystem.h"
-		#include "TCPIP Stack/_HTTP2.h"
-	#else
-		#include "TCPIP Stack/HTTP2.h"
-	#endif
 #endif
 
 #if defined(STACK_USE_ICMP_SERVER) || defined(STACK_USE_ICMP_CLIENT)
@@ -374,49 +248,12 @@
 	#include "TCPIP Stack/Announce.h"
 #endif
 
-#if defined(STACK_USE_SNMP_SERVER)
-	#include "TCPIP Stack/SNMP.h"
-#error "remove SNMP_SERVER"	//#include "mib.h"
-#endif
-
 #if defined(STACK_USE_NBNS)
 	#include "TCPIP Stack/NBNS.h"
 #endif
 
 #if defined(STACK_USE_DNS)
 	#include "TCPIP Stack/DNS.h"
-#endif
-
-#if defined(STACK_USE_DYNAMICDNS_CLIENT)
-	#include "TCPIP Stack/DynDNS.h"
-#endif
-
-#if defined(STACK_USE_TELNET_SERVER)
-	#include "TCPIP Stack/Telnet.h"
-#endif
-
-#if defined(STACK_USE_SMTP_CLIENT)
-	#include "TCPIP Stack/SMTP.h"
-#endif
-
-#if defined(STACK_USE_TFTP_CLIENT)
-	#include "TCPIP Stack/TFTPc.h"
-#endif
-
-#if defined(STACK_USE_REBOOT_SERVER)
-	#include "TCPIP Stack/Reboot.h"
-#endif
-
-#if defined(STACK_USE_SNTP_CLIENT)
-	#include "TCPIP Stack/SNTP.h"
-#endif
-
-#if defined(STACK_USE_UDP_PERFORMANCE_TEST)
-	#include "TCPIP Stack/UDPPerformanceTest.h"
-#endif
-
-#if defined(STACK_USE_TCP_PERFORMANCE_TEST)
-	#include "TCPIP Stack/TCPPerformanceTest.h"
 #endif
 
 #if defined(STACK_USE_SSL)

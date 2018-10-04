@@ -88,13 +88,7 @@
 #define IP_SERVICE_H_RELIB  (0x20)
 
 #define IP_SERVICE          (IP_SERVICE_ROUTINE | IP_SERVICE_N_DELAY)
-
-#if defined(STACK_USE_ZEROCONF_MDNS_SD)
-  #define MY_IP_TTL           (255)  // Time-To-Live in hops 
-  // IP TTL is set to 255 for Multicast DNS compatibility. See mDNS-draft-08, section 4.
-#else
   #define MY_IP_TTL           (100)  // Time-To-Live in hops
-#endif
 
 
 

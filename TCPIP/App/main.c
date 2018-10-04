@@ -63,13 +63,6 @@
 // Include all headers for any enabled TCPIP Stack functions
 #include "TCPIP Stack/TCPIP.h"
 
-#if defined(STACK_USE_ZEROCONF_LINK_LOCAL)
-#include "TCPIP Stack/ZeroconfLinkLocal.h"
-#endif
-#if defined(STACK_USE_ZEROCONF_MDNS_SD)
-#include "TCPIP Stack/ZeroconfMulticastDNS.h"
-#endif
-
 // Include functions specific to this stack application
 #include "Main.h"
 #include "Custom_SPI.h"
@@ -175,9 +168,6 @@ void main(void)
     // Initialize stack-related hardware components that may be 
     // required by the UART configuration routines
     TickInit();
-    #if defined(STACK_USE_MPFS2)
-    MPFSInit();
-    #endif
 
     // Initialize Stack and application related NV variables into AppConfig.
     InitAppConfig();
@@ -250,25 +240,6 @@ void main(void)
     UART2TCPBridgeInit();
     #endif
 
-    #if defined(STACK_USE_ZEROCONF_LINK_LOCAL)
-    ZeroconfLLInitialize();
-    #endif
-
-    #if defined(STACK_USE_ZEROCONF_MDNS_SD)
-    mDNSInitialize(MY_DEFAULT_HOST_NAME);
-    mDNSServiceRegister(
-        (const char *) "DemoWebServer",    // base name of the service
-        "_http._tcp.local",                // type of the service
-        80,                                // TCP or UDP port, at which this service is available
-        ((const BYTE *)"path=/index.htm"), // TXT info
-        1,                                 // auto rename the service when if needed
-        NULL,                              // no callback function
-        NULL                               // no application context
-        );
-
-    mDNSMulticastFilterRegister();            
-    #endif
-
     // Now that all items are initialized, begin the co-operative
     // multitasking loop.  This infinite loop will continuously 
     // execute all stack-related tasks, as well as your own
@@ -304,62 +275,9 @@ void main(void)
         // This tasks invokes each of the core stack application tasks
         StackApplications();
 
-        #if defined(STACK_USE_ZEROCONF_LINK_LOCAL)
-        ZeroconfLLProcess();
-        #endif
-
-        #if defined(STACK_USE_ZEROCONF_MDNS_SD)
-        mDNSProcess();
-        // Use this function to exercise service update function
-        // HTTPUpdateRecord();
-        #endif
-
-        // Process application specific tasks here.
-        // For this demo app, this will include the Generic TCP 
-        // client and servers, and the SNMP, Ping, and SNMP Trap
-        // demos.  Following that, we will process any IO from
-        // the inputs on the board itself.
-        // Any custom modules or processing you need to do should
-        // go here.
-        #if defined(STACK_USE_GENERIC_TCP_CLIENT_EXAMPLE)
-        GenericTCPClient();
-        #endif
-        
-        #if defined(STACK_USE_GENERIC_TCP_SERVER_EXAMPLE)
-        GenericTCPServer();
-        #endif
-        
-        #if defined(STACK_USE_SMTP_CLIENT)
-        SMTPDemo();
-        #endif
-        
 	    //180920a2    #if defined(STACK_USE_ICMP_CLIENT)
 	    //180920a2    PingDemo();
 	    //180920a2    #endif
-
-		#if defined(STACK_USE_TFTP_CLIENT) && defined(WF_CS_TRIS)	
-		TFTPGetUploadStatus();
-		#endif
-        
-        #if defined(STACK_USE_SNMP_SERVER) && !defined(SNMP_TRAP_DISABLED)
-        //User should use one of the following SNMP demo
-        // This routine demonstrates V1 or V2 trap formats with one variable binding.
-        SNMPTrapDemo();
-        
-        #if defined(SNMP_STACK_USE_V2_TRAP) || defined(SNMP_V1_V2_TRAP_WITH_SNMPV3)
-        //This routine provides V2 format notifications with multiple (3) variable bindings
-        //User should modify this routine to send v2 trap format notifications with the required varbinds.
-        //SNMPV2TrapDemo();
-        #endif 
-        if(gSendTrapFlag)
-            SNMPSendTrap();
-        #endif
-        
-        #if defined(STACK_USE_BERKELEY_API)
-        BerkeleyTCPClientDemo();
-        BerkeleyTCPServerDemo();
-        BerkeleyUDPClientDemo();
-        #endif
 
         ProcessIO();
 
@@ -385,25 +303,6 @@ void main(void)
                 AnnounceIP();
             #endif
 
-            #if defined(STACK_USE_ZEROCONF_MDNS_SD)
-                mDNSFillHostRecord();
-            #endif
-
-			#ifdef WIFI_NET_TEST	
-			#ifdef STACK_USE_TFTP_CLIENT
-			if(AppConfig.Flags.bIsDHCPEnabled && DHCPIsBound(0)) {	
-				static UINT8  tftpInitDone = 0;
-				static BYTE dummy_file[] = "TFTP test dummy contents";
-				static ROM BYTE file_name[] = "dontcare";
-				static ROM BYTE host_name[] = "tftp" WIFI_NET_TEST_DOMAIN;	
-				if (!tftpInitDone) {
-					TFTPUploadRAMFileToHost(host_name, file_name, dummy_file, sizeof(dummy_file));
-					tftpInitDone = 1;
-				}
-			}
-			#endif
-			#endif
-			
         }    
         #if defined(DERIVE_KEY_FROM_PASSPHRASE_IN_HOST) && defined (MRF24WG)
             if (g_WpsPassphrase.valid) {
@@ -884,49 +783,6 @@ static void InitAppConfig(void)
         AppConfig.SecondaryDNSServer.Val = MY_DEFAULT_SECONDARY_DNS_BYTE1 | MY_DEFAULT_SECONDARY_DNS_BYTE2<<8ul  | MY_DEFAULT_SECONDARY_DNS_BYTE3<<16ul  | MY_DEFAULT_SECONDARY_DNS_BYTE4<<24ul;
     
     
-        // SNMP Community String configuration
-        #if defined(STACK_USE_SNMP_SERVER)
-        {
-            BYTE i;
-            static ROM char * ROM cReadCommunities[] = SNMP_READ_COMMUNITIES;
-            static ROM char * ROM cWriteCommunities[] = SNMP_WRITE_COMMUNITIES;
-            ROM char * strCommunity;
-            
-            for(i = 0; i < SNMP_MAX_COMMUNITY_SUPPORT; i++)
-            {
-                // Get a pointer to the next community string
-                strCommunity = cReadCommunities[i];
-                if(i >= sizeof(cReadCommunities)/sizeof(cReadCommunities[0]))
-                    strCommunity = "";
-    
-                // Ensure we don't buffer overflow.  If your code gets stuck here, 
-                // it means your SNMP_COMMUNITY_MAX_LEN definition in TCPIPConfig.h 
-                // is either too small or one of your community string lengths 
-                // (SNMP_READ_COMMUNITIES) are too large.  Fix either.
-                if(strlenpgm(strCommunity) >= sizeof(AppConfig.readCommunity[0]))
-                    while(1);
-                
-                // Copy string into AppConfig
-                strcpypgm2ram((char*)AppConfig.readCommunity[i], strCommunity);
-    
-                // Get a pointer to the next community string
-                strCommunity = cWriteCommunities[i];
-                if(i >= sizeof(cWriteCommunities)/sizeof(cWriteCommunities[0]))
-                    strCommunity = "";
-    
-                // Ensure we don't buffer overflow.  If your code gets stuck here, 
-                // it means your SNMP_COMMUNITY_MAX_LEN definition in TCPIPConfig.h 
-                // is either too small or one of your community string lengths 
-                // (SNMP_WRITE_COMMUNITIES) are too large.  Fix either.
-                if(strlenpgm(strCommunity) >= sizeof(AppConfig.writeCommunity[0]))
-                    while(1);
-    
-                // Copy string into AppConfig
-                strcpypgm2ram((char*)AppConfig.writeCommunity[i], strCommunity);
-            }
-        }
-        #endif
-    
         // Load the default NetBIOS Host Name
         memcpypgm2ram(AppConfig.NetBIOSName, (ROM void*)MY_DEFAULT_HOST_NAME, 16);
         FormatNetBIOSName(AppConfig.NetBIOSName);
@@ -1041,14 +897,6 @@ void SaveAppConfig(const APP_CONFIG *ptrAppConfig)
 {
     NVM_VALIDATION_STRUCT NVMValidationStruct;
 
-    // Ensure adequate space has been reserved in non-volatile storage to 
-    // store the entire AppConfig structure.  If you get stuck in this while(1) 
-    // trap, it means you have a design time misconfiguration in TCPIPConfig.h.
-    // You must increase MPFS_RESERVE_BLOCK to allocate more space.
-    #if defined(STACK_USE_MPFS2)
-        if(sizeof(NVMValidationStruct) + sizeof(AppConfig) > MPFS_RESERVE_BLOCK)
-            while(1);
-    #endif
 
     // Get proper values for the validation structure indicating that we can use 
     // these EEPROM/Flash contents on future boot ups

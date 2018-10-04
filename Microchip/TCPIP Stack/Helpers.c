@@ -658,7 +658,7 @@ WORD Base64Decode(BYTE* cSourceData, WORD wSourceLen, BYTE* cDestData, WORD wDes
 	Encoded data is always at least 1/3 larger than the source data.  It may
 	be 1 or 2 bytes larger than that.
   ***************************************************************************/
-#if defined(STACK_USE_BASE64_ENCODE) || defined(STACK_USE_SMTP_CLIENT) || defined(STACK_USE_DYNAMICDNS_CLIENT)
+#if defined(STACK_USE_BASE64_ENCODE)
 WORD Base64Encode(BYTE* cSourceData, WORD wSourceLen, BYTE* cDestData, WORD wDestLen)
 {
 	BYTE i, j;
@@ -724,7 +724,7 @@ WORD Base64Encode(BYTE* cSourceData, WORD wSourceLen, BYTE* cDestData, WORD wDes
 
 	return wOutputLen;
 }
-#endif // #if defined(STACK_USE_BASE64_ENCODE) || defined(STACK_USE_SMTP) || defined(STACK_USE_DYNAMICDNS_CLIENT)
+#endif // #if defined(STACK_USE_BASE64_ENCODE)
 
 
 /*****************************************************************************
