@@ -9,17 +9,41 @@ Pic18a1(f67j60)TCPIP__180923b
 
 #### new tasks
 *
-* new task v: blank </br>
+* new task v: remove ???STACK_USE_TCP??? </br>
+* new task v: remove STACK_USE_SSL </br>
+* new task v: remove DSPICDEM11 </br>
+* new task v: remove PIC24FJ64GA004_PIM </br>
+* new task v: remove ENC100_CS_TRIS </br>
+* new task v: remove ENC_CS_TRIS </br>
+* new task v: remove DERIVE_KEY_FROM_PASSPHRASE_IN_HOST </br>
+* new task v: remove USE_LCD (include LCD_DATA_IO, LCD_DATA0_IO,..) </br>
 *
 
 ---------------
 ## processing task
-- 181001a4, remove __C32**,__PIC24**,__PIC32
-- 181001a3, remove __C30**
-- 181001a2, remove HI_TECH_C
-- 181001a1, remove "CFG_INCLUDE_PICDN2_ETH97" in mcp, output hex file no change
+- 181006a1, remove Wifi no use code (WF_CS_TRIS and relevant WF_MODULE_NUMBER, STACK_USE_AUTOUPDATE_HTTPSERVER)
+- - note: 
+- - 1. need to deleted "NON_MCHP_MAC" define, relevant WF_CS_TRIS refer to "MAC.h"
+
+#### done record
+- - from 181003 to 181004: see below permanent remove list
+- - 181001a4, remove __C32**,__PIC24**,__PIC32
+- - 181001a3, remove __C30**
+- - 181001a2, remove HI_TECH_C
+- - 181001a1, remove "CFG_INCLUDE_PICDN2_ETH97" in mcp, output hex file no change
+-
+- - copy processing </br>
+- - 180920a2, to remove PingDemo.c </br>
+- - 180920a1, to remove delay.c and DNSs.c </br>
+- - 180918a, update c018i startup code instead of c018oc2k </br>
+- - 180917a remove debug*,StructQueue*,timeDelay*,timer*, DynDNS*, FTP*, Hashes*, MPFS2* and regdef*, SPIRAM* and SPIEEPROM* </br>
+- - 180914a,change maindemo to main (c,h) and remove BitInt* </br>
+- - 180913a,remove smtp* (c,h); DHCP* (c,h) and AutoIP (c,h); HTTP* (c,h); ICMP_SERVER and no deleted is same, thus resume; FileSystem (c,h), MPFS2 (c,h), SNMP (c,h); TFTPc (c,h) -- that is Trivial File Transfer Protocol (TFTP) Client; ENCX24J600 (c,h) and more files </br>
+- - 180912b,remove WF* (c,h) -- "WF_CS_TRIS"; Zeroconf* (c,h); ETHPIC32*.* (pic32 library file); </br>
+- - ... </br>
+-
 - permanent remove list
-- -
+	----
 	| remove macro|status|Remark|
 	|---|---|---|
 	| __C32*|Processed|exclude compiler.h
@@ -53,19 +77,8 @@ Pic18a1(f67j60)TCPIP__180923b
 	| STACK_USE_BERKELEY_API|181004a8PermanenceDelete|see above
 	| STACK_USE_ZEROCONF_LINK_LOCAL|181004a9PermanenceDelete|see above
 	| STACK_USE_ZEROCONF_MDNS_SD|181004a10PermanenceDelete|see above
+	
 
----------------
-#### closed task record
-- - copy processing </br>
-- - 180920a2, to remove PingDemo.c </br>
-- - 180920a1, to remove delay.c and DNSs.c </br>
-- - 180918a, update c018i startup code instead of c018oc2k </br>
-- - 180917a remove debug*,StructQueue*,timeDelay*,timer*, DynDNS*, FTP*, Hashes*, MPFS2* and regdef*, SPIRAM* and SPIEEPROM* </br>
-- - 180914a,change maindemo to main (c,h) and remove BitInt* </br>
-- - 180913a,remove smtp* (c,h); DHCP* (c,h) and AutoIP (c,h); HTTP* (c,h); ICMP_SERVER and no deleted is same, thus resume; FileSystem (c,h), MPFS2 (c,h), SNMP (c,h); TFTPc (c,h) -- that is Trivial File Transfer Protocol (TFTP) Client; ENCX24J600 (c,h) and more files </br>
-- - 180912b,remove WF* (c,h) -- "WF_CS_TRIS"; Zeroconf* (c,h); ETHPIC32*.* (pic32 library file); </br>
-- - ... </br>
--
 ----
 >
 > (branch:master)

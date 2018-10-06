@@ -259,8 +259,4 @@
 #if defined(STACK_USE_SSL)
 	#include "TCPIP Stack/SSL.h"
 #endif
-
-#if defined(WF_CS_TRIS)
-    #include "TCPIP Stack/WFMac.h"
-#endif
 #endif

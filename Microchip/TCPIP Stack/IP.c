@@ -56,7 +56,7 @@
  * Howard Schlunder		8/31/04	Beta Rev 0.9 (See version.log for detail)
  * Howard Schlunder		1/5/06	Improved DMA checksum efficiency
  * Darren Rook			9/21/06	Corrected IPHeaderLen not being 
- * 								initialized when NON_MCHP_MAC defined.
+ * 								initialized when NON_MCHP_MAC defined. (deleted the define due to no use "NON_MCHP_MAC")
  ********************************************************************/
 #define __IP_C
 
@@ -135,14 +135,6 @@ BOOL IPGetHeader(IP_ADDR *localIP,
     WORD_VAL    CalcChecksum;
     IP_HEADER   header;
 
-#if defined(NON_MCHP_MAC)
-    WORD_VAL    ReceivedChecksum;
-    WORD        checksums[2];
-    BYTE        optionsLen;
-	#define MAX_OPTIONS_LEN     (40u)            // As per RFC 791.
-    BYTE        options[MAX_OPTIONS_LEN];
-#endif
-
     // Read IP header.
     MACGetArray((BYTE*)&header, sizeof(header));
 
@@ -157,7 +149,6 @@ BOOL IPGetHeader(IP_ADDR *localIP,
 
 	IPHeaderLen = (header.VersionIHL & 0x0f) << 2;
 
-#if !defined(NON_MCHP_MAC)
 	// Validate the IP header.  If it is correct, the checksum 
 	// will come out to 0x0000 (because the header contains a 
 	// precomputed checksum).  A corrupt header will have a 
@@ -168,39 +159,6 @@ BOOL IPGetHeader(IP_ADDR *localIP,
 	MACSetReadPtrInRx(IPHeaderLen);
 
     if(CalcChecksum.Val)
-#else
-    // Calculate options length in this header, if there is any.
-    // IHL is in terms of numbers of 32-bit DWORDs; i.e. actual
-    // length is 4 times IHL.
-    optionsLen = IPHeaderLen - sizeof(header);
-
-    // If there is any option(s), read it so that we can include them
-    // in checksum calculation.
-    if ( optionsLen > MAX_OPTIONS_LEN )
-        return FALSE;
-
-    if ( optionsLen > 0u )
-        MACGetArray(options, optionsLen);
-
-    // Save header checksum; clear it and recalculate it ourselves.
-    ReceivedChecksum.Val = header.HeaderChecksum;
-    header.HeaderChecksum = 0;
-
-    // Calculate checksum of header including options bytes.
-    checksums[0] = ~CalcIPChecksum((BYTE*)&header, sizeof(header));
-
-    // Calculate Options checksum too, if they are present.
-    if ( optionsLen > 0u )
-        checksums[1] = ~CalcIPChecksum((BYTE*)options, optionsLen);
-    else
-        checksums[1] = 0;
-
-    CalcChecksum.Val  = CalcIPChecksum((BYTE*)checksums,
-                                            2 * sizeof(WORD));
-
-    // Make sure that checksum is correct
-    if ( ReceivedChecksum.Val != CalcChecksum.Val )
-#endif
     {
         // Bad packet. The function caller will be notified by means of the FALSE 
         // return value and it should discard the packet.

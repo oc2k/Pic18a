@@ -248,10 +248,6 @@ static void SwapTCPHeader(TCP_HEADER* header);
 static void CloseSocket(void);
 static void SyncTCB(void);
 
-#if defined(WF_CS_TRIS)
-UINT16 WFGetTCBSize(void);
-#endif
-
 // Indicates if this packet is a retransmission (no reset) or a new packet (reset required)
 #define SENDTCP_RESET_TIMERS	0x01
 // Instead of transmitting normal data, a garbage octet is transmitted according to RFC 1122 section 4.2.3.6
@@ -395,11 +391,7 @@ void TCPInit(void)
 				wCurrentETHAddress += sizeof(TCB) + wTXSize+1 + wRXSize+1;
 				// Do a sanity check to ensure that we aren't going to use memory that hasn't been allocated to us.
 				// If your code locks up right here, it means you've incorrectly allocated your TCP socket buffers in TCPIPConfig.h.  See the TCP memory allocation section.  More RAM needs to be allocated to the base memory mediums, or the individual sockets TX and RX FIFOS and socket quantiy needs to be shrunken.
-#if defined(WF_CS_TRIS)
-				while(wCurrentETHAddress > TCP_ETH_RAM_BASE_ADDRESS + WFGetTCBSize()/*TCP_ETH_RAM_SIZE*/);
-#else
 				while(wCurrentETHAddress > TCP_ETH_RAM_BASE_ADDRESS + TCP_ETH_RAM_SIZE);
-#endif
 				break;
 			#endif
 				

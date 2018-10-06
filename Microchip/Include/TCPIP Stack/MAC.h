@@ -58,34 +58,16 @@
 
 #include "HardwareProfile.h"
 
-#if defined(WF_CS_TRIS)
-	// Do not use the DMA and other goodies that Microchip Ethernet modules have
-	#define NON_MCHP_MAC
-#endif
-
-#if defined(ENC_CS_TRIS) && defined(WF_CS_TRIS)
-	#error "Error in HardwareProfile.h.  Must select either the ENC28J60 or the MRF24WB10 but not both ENC_CS_TRIS and WF_CS_TRIS."
-#endif
-#if defined(ENC100_INTERFACE_MODE) && defined(WF_CS_TRIS)
-	#error "Error in HardwareProfile.h.  Must select either the ENCX24J600 or the MRF24WB10 but not both ENC100_INTERFACE_MODE and WF_CS_TRIS."
-#endif
 #if defined(ENC100_INTERFACE_MODE) && defined(ENC_CS_TRIS)
 	#error "Error in HardwareProfile.h.  Must select either the ENC28J60 or the ENCX24J600 but not both ENC_CS_TRIS and ENC100_INTERFACE_MODE."
 #endif
 
 
 
-#if !defined(ENC_CS_TRIS) && !defined(WF_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && \
+#if !defined(ENC_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && \
 	 (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
 	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60))
 	#include "TCPIP Stack/ETH97J60.h"
-#elif 0 // defined(ENC_CS_TRIS) || defined(WF_CS_TRIS)
-	#include "TCPIP Stack/ENC28J60.h"
-#elif 0 // defined(ENC100_INTERFACE_MODE)
-	#include "TCPIP Stack/ENCX24J600.h"
-	#define PHYREG WORD
-#elif 0 //defined(__PIC32MX__) && defined(_ETH)
-	// extra includes for PIC32MX with embedded ETH Controller
 #else
 	#error No Ethernet/WiFi controller defined in HardwareProfile.h.  Defines for an ENC28J60, ENC424J600/624J600, or WiFi MRF24WB10 must be present.
 #endif
@@ -114,41 +96,8 @@ typedef struct  __attribute__((aligned(2), packed))
 	#define RESERVED_SSL_MEMORY 0ul
 #endif
 
-#if defined(WF_CS_TRIS)
-    #define MAX_PACKET_SIZE     (1514ul)
-#endif
-
 // MAC RAM definitions
-#if 0 //defined(ENC100_INTERFACE_MODE)
-	#define RESERVED_CRYPTO_MEMORY	(128ul)
-	#define RAMSIZE			(24*1024ul)
-	#define TXSTART 		(0x0000ul)
-	#define RXSTART 		((TXSTART + 1518ul + TCP_ETH_RAM_SIZE + RESERVED_HTTP_MEMORY + RESERVED_SSL_MEMORY + RESERVED_CRYPTO_MEMORY + 1ul) & 0xFFFE)
-	#define	RXSTOP			(RAMSIZE-1ul)
-	#define RXSIZE			(RXSTOP-RXSTART+1ul)
-	#define BASE_TX_ADDR	(TXSTART)
-	#define BASE_TCB_ADDR	(BASE_TX_ADDR + 1518ul)
-	#define BASE_HTTPB_ADDR (BASE_TCB_ADDR + TCP_ETH_RAM_SIZE)
-	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
-	#define BASE_CRYPTOB_ADDR	(BASE_SSLB_ADDR + RESERVED_SSL_MEMORY)
-#elif 0 // defined(WF_CS_TRIS)
-	#define RAMSIZE 		(14170ul - 8192ul - RESERVED_HTTP_MEMORY - RESERVED_SSL_MEMORY)
-	#define TXSTART 		(RAMSIZE - (4ul + MAX_PACKET_SIZE + 4ul))
-	#define RXSTART 		(0ul)
-	#define RXSTOP			((TXSTART-2ul) | 0x0001ul)
-	#define RXSIZE			(RXSTOP-RXSTART+1ul)
-	#define BASE_TX_ADDR	(TXSTART + 4ul)
-	#define BASE_SCRATCH_ADDR (BASE_TX_ADDR + (MAX_PACKET_SIZE + 4ul))
-	#define BASE_HTTPB_ADDR  (BASE_SCRATCH_ADDR)
-	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
-	#define BASE_TCB_ADDR	(BASE_SSLB_ADDR + RESERVED_SSL_MEMORY)
-#elif 0 //defined(__PIC32MX__) && defined(_ETH) && !defined(ENC_CS_TRIS)
-	#define BASE_TX_ADDR	(MACGetTxBaseAddr())
-	#define BASE_HTTPB_ADDR	(MACGetHttpBaseAddr())
-	#define BASE_SSLB_ADDR	(MACGetSslBaseAddr())
-	#define RXSIZE			(EMAC_RX_BUFF_SIZE)
-	#define RAMSIZE			(2*RXSIZE)	// not used but silences the compiler
-#else	// ENC28J60 or PIC18F97J60 family internal Ethernet controller
+// ENC28J60 or PIC18F97J60 family internal Ethernet controller
 	#define RAMSIZE			(8*1024ul)
 	#define TXSTART 		(RAMSIZE - (1ul+1518ul+7ul) - TCP_ETH_RAM_SIZE - RESERVED_HTTP_MEMORY - RESERVED_SSL_MEMORY)
 	#define RXSTART			(0ul)						// Should be an even memory address; must be 0 for errata
@@ -158,7 +107,6 @@ typedef struct  __attribute__((aligned(2), packed))
 	#define BASE_TCB_ADDR	(BASE_TX_ADDR + (1514ul+7ul))
 	#define BASE_HTTPB_ADDR (BASE_TCB_ADDR + TCP_ETH_RAM_SIZE)
 	#define BASE_SSLB_ADDR	(BASE_HTTPB_ADDR + RESERVED_HTTP_MEMORY)
-#endif
 
 #if (RXSIZE < 1400) || (RXSIZE > RAMSIZE)
 	#error Warning, Ethernet RX buffer is tiny.  Reduce TCP socket count, the size of each TCP socket, or move sockets to a different RAM
