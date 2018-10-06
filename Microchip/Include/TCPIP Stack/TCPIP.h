@@ -91,18 +91,6 @@
  *   on configurations selected in TCPIPConfig.h
  *******************************************************************/
 
-	// When IP Gleaning is enabled, ICMP must also be enabled.
-	// Include modules required by specific HTTP demos
-	#if !defined(STACK_USE_HTTP2_SERVER)
-		#undef STACK_USE_HTTP_MD5_DEMO
-		#undef STACK_USE_HTTP_APP_RECONFIG
-	#endif
-	#if defined(STACK_USE_HTTP_MD5_DEMO)
-		#if !defined(STACK_USE_MD5)
-			#define STACK_USE_MD5
-		#endif
-	#endif
-	
 	// Can't do MPFS upload without POST or external memory
 	#if defined(HTTP_MPFS_UPLOAD)
 		#if !defined(HTTP_USE_POST) || (!defined(MPFS_USE_EEPROM) && !defined(MPFS_USE_SPI_FLASH))
@@ -164,25 +152,6 @@
 	    #endif
 	#endif
 
-	// If using SSL (either), include the rest of the support modules
-	#if defined(STACK_USE_SSL)
-		#define STACK_USE_ARCFOUR
-		#define STACK_USE_MD5
-		#define STACK_USE_SHA1
-		#define STACK_USE_RANDOM
-	#endif
-
-	// When using either RSA operation, include the RSA module
-	#if defined(STACK_USE_RSA_ENCRYPT) || defined(STACK_USE_RSA_DECRYPT)
-		#define STACK_USE_RSA
-		#define STACK_USE_BIGINT
-	#endif
-
-	// Enable the LCD if configured in the hardware profile
-	#if defined(LCD_DATA_IO) || defined(LCD_DATA0_IO)
-	#warning "no use LCD as decide"	// #define USE_LCD
-	#endif
-	
 
 #include "TCPIP Stack/StackTsk.h"
 #include "TCPIP Stack/Helpers.h"
@@ -191,26 +160,6 @@
 #include "TCPIP Stack/MAC.h"
 #include "TCPIP Stack/IP.h"
 #include "TCPIP Stack/ARP.h"
-
-#if defined(STACK_USE_BIGINT)
-	#include "TCPIP Stack/BigInt.h"
-#endif
-
-#if defined(STACK_USE_RSA)
-	#include "TCPIP Stack/RSA.h"
-#endif
-
-#if defined(STACK_USE_ARCFOUR)
-	#include "TCPIP Stack/ARCFOUR.h"
-#endif
-
-#if defined(STACK_USE_RANDOM)
-	#include "TCPIP Stack/Random.h"
-#endif
-
-#if defined(STACK_USE_MD5) || defined(STACK_USE_SHA1)
-	#include "TCPIP Stack/Hashes.h"
-#endif
 
 //	#include "TCPIP Stack/XEEPROM.h"
 	#include "TCPIP Stack/SPIFlash.h"
@@ -222,10 +171,6 @@
 
 #if defined(STACK_USE_TCP)
 	#include "TCPIP Stack/TCP.h"
-#endif
-
-#if defined(USE_LCD)
-	#include "TCPIP Stack/LCDBlocking.h"
 #endif
 
 #if defined(STACK_USE_UART2TCP_BRIDGE)
@@ -254,9 +199,5 @@
 
 #if defined(STACK_USE_DNS)
 	#include "TCPIP Stack/DNS.h"
-#endif
-
-#if defined(STACK_USE_SSL)
-	#include "TCPIP Stack/SSL.h"
 #endif
 #endif

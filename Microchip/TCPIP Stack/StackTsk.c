@@ -107,18 +107,6 @@ void StackInit(void)
 #if defined(STACK_USE_TCP)
     TCPInit();
 #endif
-
-#if defined(STACK_USE_RSA)
-	RSAInit();
-#endif
-
-#if defined(STACK_USE_SSL)
-    SSLInit();
-#endif
-
-#if defined(STACK_USE_RANDOM)
-	RandomInit();
-#endif
 }
 
 
@@ -163,10 +151,6 @@ void StackTask(void)
 	while(1)
 	{
 		//if using the random module, generate entropy
-		#if defined(STACK_USE_RANDOM)
-			RandomAdd(remoteNode.MACAddr.v[5]);
-		#endif
-
 		// We are about to fetch a new packet, make sure that the 
 		// UDP module knows that any old RX data it has laying 
 		// around will now be gone.

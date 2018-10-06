@@ -425,9 +425,6 @@ void TCPInit(void)
 		MyTCBStub.bufferEnd		= MyTCBStub.bufferRxStart + wRXSize;
 		MyTCBStub.smState		= TCP_CLOSED;
 		MyTCBStub.Flags.bServer	= FALSE;
-		#if defined(STACK_USE_SSL)
-		MyTCBStub.sslStubID = SSL_INVALID_ID;
-		#endif		
 
 		SyncTCB();
 		MyTCB.vSocketPurpose = TCPSocketInitializer[i].vSocketPurpose;
@@ -824,16 +821,6 @@ void TCPDisconnect(TCP_SOCKET hTCP)
 
 		case TCP_SYN_RECEIVED:
 		case TCP_ESTABLISHED:
-			#if defined(STACK_USE_SSL)
-			// When disconnecting SSL sockets, send a close_notify so we can resume later
-			if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-			{
-				// Flush pending data and send close_notify
-				SSLTxRecord(hTCP, MyTCBStub.sslStubID, SSL_APPLICATION);
-				SSLTxMessage(hTCP, MyTCBStub.sslStubID, SSL_ALERT_CLOSE_NOTIFY);
-			}
-			#endif
-
 			// Send the FIN.  This is done in a loop to ensure that if we have 
 			// more data wating in the TX FIFO than can be sent in a single 
 			// packet (due to the remote Max Segment Size packet size limit), 
@@ -1065,25 +1052,6 @@ WORD TCPIsPutReady(TCP_SOCKET hTCP)
 		return 0;
 
 	// Calculate the free space in this socket's TX FIFO
-	#if defined(STACK_USE_SSL)
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-	{// Use sslTxHead as the head pointer when SSL is active
-		WORD rem;
-		
-		// Find out raw free space
-		if(MyTCBStub.sslTxHead >= MyTCBStub.txTail)
-			rem = (MyTCBStub.bufferRxStart - MyTCBStub.bufferTxStart - 1) - (MyTCBStub.sslTxHead - MyTCBStub.txTail);
-		else
-			rem = MyTCBStub.txTail - MyTCBStub.sslTxHead - 1;
-			
-		// Reserve space for a new MAC and header
-		if(rem > 22u)
-			return rem - 22;
-		else
-			return 0;
-	}
-	#endif
-	
 	if(MyTCBStub.txHead >= MyTCBStub.txTail)
 		return (MyTCBStub.bufferRxStart - MyTCBStub.bufferTxStart - 1) - (MyTCBStub.txHead - MyTCBStub.txTail);
 	else
@@ -1135,24 +1103,9 @@ BOOL TCPPut(TCP_SOCKET hTCP, BYTE byte)
 		MyTCBStub.Flags.bHalfFullFlush = TRUE;
 	}
 
-	#if defined(STACK_USE_SSL)
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-	{
-		TCPRAMCopy(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, (PTR_BASE)&byte, TCP_PIC_RAM, sizeof(byte));
-		if(++MyTCBStub.sslTxHead >= MyTCBStub.bufferRxStart)
-			MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-	}
-	else
-	{
-		TCPRAMCopy(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, (PTR_BASE)&byte, TCP_PIC_RAM, sizeof(byte));
-		if(++MyTCBStub.txHead >= MyTCBStub.bufferRxStart)
-			MyTCBStub.txHead = MyTCBStub.bufferTxStart;
-	}
-	#else
 	TCPRAMCopy(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, (PTR_BASE)&byte, TCP_PIC_RAM, sizeof(byte));
 	if(++MyTCBStub.txHead >= MyTCBStub.bufferRxStart)
 		MyTCBStub.txHead = MyTCBStub.bufferTxStart;
-	#endif
 	
 
 	// Send the last byte as a separate packet (likely will make the remote node send back ACK faster)
@@ -1224,38 +1177,6 @@ WORD TCPPutArray(TCP_SOCKET hTCP, BYTE* data, WORD len)
 		MyTCBStub.Flags.bHalfFullFlush = TRUE;
 	}
 	
-	#if defined(STACK_USE_SSL)
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-	{
-		// See if we need a two part put
-		if(MyTCBStub.sslTxHead + wActualLen >= MyTCBStub.bufferRxStart)
-		{
-			wRightLen = MyTCBStub.bufferRxStart-MyTCBStub.sslTxHead;
-			TCPRAMCopy(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, (PTR_BASE)data, TCP_PIC_RAM, wRightLen);
-			data += wRightLen;
-			wActualLen -= wRightLen;
-			MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-		}
-	
-		TCPRAMCopy(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, (PTR_BASE)data, TCP_PIC_RAM, wActualLen);
-		MyTCBStub.sslTxHead += wActualLen;
-	}
-	else
-	{
-		// See if we need a two part put
-		if(MyTCBStub.txHead + wActualLen >= MyTCBStub.bufferRxStart)
-		{
-			wRightLen = MyTCBStub.bufferRxStart-MyTCBStub.txHead;
-			TCPRAMCopy(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, (PTR_BASE)data, TCP_PIC_RAM, wRightLen);
-			data += wRightLen;
-			wActualLen -= wRightLen;
-			MyTCBStub.txHead = MyTCBStub.bufferTxStart;
-		}
-	
-		TCPRAMCopy(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, (PTR_BASE)data, TCP_PIC_RAM, wActualLen);
-		MyTCBStub.txHead += wActualLen;
-	}
-	#else
 	// See if we need a two part put
 	if(MyTCBStub.txHead + wActualLen >= MyTCBStub.bufferRxStart)
 	{
@@ -1268,7 +1189,6 @@ WORD TCPPutArray(TCP_SOCKET hTCP, BYTE* data, WORD len)
 
 	TCPRAMCopy(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, (PTR_BASE)data, TCP_PIC_RAM, wActualLen);
 	MyTCBStub.txHead += wActualLen;
-	#endif
 
 	// Send these bytes right now if we are out of TX buffer space
 	if(wFreeTXSpace <= len)
@@ -1343,38 +1263,6 @@ WORD TCPPutROMArray(TCP_SOCKET hTCP, ROM BYTE* data, WORD len)
 	if(wFreeTXSpace > len)
 		wActualLen = len;
 	
-	#if defined(STACK_USE_SSL)
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-	{
-		// See if we need a two part put
-		if(MyTCBStub.sslTxHead + wActualLen >= MyTCBStub.bufferRxStart)
-		{
-			wRightLen = MyTCBStub.bufferRxStart-MyTCBStub.sslTxHead;
-			TCPRAMCopyROM(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, data, wRightLen);
-			data += wRightLen;
-			wActualLen -= wRightLen;
-			MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-		}
-	
-		TCPRAMCopyROM(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, data, wActualLen);
-		MyTCBStub.sslTxHead += wActualLen;
-	}
-	else
-	{
-		// See if we need a two part put
-		if(MyTCBStub.txHead + wActualLen >= MyTCBStub.bufferRxStart)
-		{
-			wRightLen = MyTCBStub.bufferRxStart-MyTCBStub.txHead;
-			TCPRAMCopyROM(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, data, wRightLen);
-			data += wRightLen;
-			wActualLen -= wRightLen;
-			MyTCBStub.txHead = MyTCBStub.bufferTxStart;
-		}
-	
-		TCPRAMCopyROM(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, data, wActualLen);
-		MyTCBStub.txHead += wActualLen;
-	}
-	#else
 	// See if we need a two part put
 	if(MyTCBStub.txHead + wActualLen >= MyTCBStub.bufferRxStart)
 	{
@@ -1387,7 +1275,6 @@ WORD TCPPutROMArray(TCP_SOCKET hTCP, ROM BYTE* data, WORD len)
 
 	TCPRAMCopyROM(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, data, wActualLen);
 	MyTCBStub.txHead += wActualLen;
-	#endif
 
 	// Send these bytes right now if we are out of TX buffer space
 	if(wFreeTXSpace <= len)
@@ -1744,26 +1631,8 @@ WORD TCPGetRxFIFOFree(TCP_SOCKET hTCP)
 	// Calculate total usable FIFO size
 	wFIFOSize = MyTCBStub.bufferEnd - MyTCBStub.bufferRxStart;
 
-	#if defined(STACK_USE_SSL)
-	{
-		PTR_BASE SSLtemp = MyTCBStub.rxHead;
-
-		// Move SSL pointer to determine full buffer size
-		if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-			MyTCBStub.rxHead = MyTCBStub.sslRxHead;
-
 		// Find out how many data bytes are actually in the RX FIFO
 		wDataLen = TCPIsGetReady(hTCP);
-		
-		// Move SSL pointer back to proper location (if we changed it)
-		MyTCBStub.rxHead = SSLtemp;
-	}
-	#else
-	{
-		// Find out how many data bytes are actually in the RX FIFO
-		wDataLen = TCPIsGetReady(hTCP);
-	}
-	#endif
 	
 	// Perform the calculation	
 	return wFIFOSize - wDataLen;
@@ -2326,22 +2195,6 @@ void TCPTick(void)
 		SyncTCBStub(hTCP);
 		
 		// Handle any SSL Processing and Message Transmission
-		#if defined(STACK_USE_SSL)
-		if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-		{
-			// Handle any periodic tasks, such as RSA operations
-			SSLPeriodic(hTCP, MyTCBStub.sslStubID);
-			
-			// If unsent data is waiting, transmit it as an application record
-			if(MyTCBStub.sslTxHead != MyTCBStub.txHead && TCPSSLGetPendingTxSize(hTCP) != 0u)
-				SSLTxRecord(hTCP, MyTCBStub.sslStubID, SSL_APPLICATION);
-			
-			// If an SSL message is requested, send it now
-			if(MyTCBStub.sslReqMessage != SSL_NO_MESSAGE)
-				SSLTxMessage(hTCP, MyTCBStub.sslStubID, MyTCBStub.sslReqMessage);
-		}
-		#endif
-		
 		vFlags = 0x00;
 		bRetransmit = FALSE;
 		bCloseSocket = FALSE;
@@ -2813,27 +2666,7 @@ BOOL TCPProcess(NODE_INFO* remote, IP_ADDR* localIP, WORD len)
 	// Find matching socket.
 	if(FindMatchingSocket(&TCPHeader, remote))
 	{
-		#if defined(STACK_USE_SSL)
-		PTR_BASE prevRxHead;
-		// For SSL connections, show HandleTCPSeg() the full data buffer
-		prevRxHead = MyTCBStub.rxHead;
-		if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-			MyTCBStub.rxHead = MyTCBStub.sslRxHead;
-		#endif
-		
 		HandleTCPSeg(&TCPHeader, len);
-		
-		#if defined(STACK_USE_SSL)
-		if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-		{
-			// Restore the buffer state
-			MyTCBStub.sslRxHead = MyTCBStub.rxHead;
-			MyTCBStub.rxHead = prevRxHead;
-
-			// Process the new SSL data, using the currently loaded stub
-			TCPSSLHandleIncoming(hCurrentTCP);
-		}
-		#endif
 	}
 //	else
 //	{
@@ -3372,24 +3205,6 @@ static void CloseSocket(void)
 	MyTCBStub.Flags.bTXFIN = 0;
 	MyTCBStub.Flags.bSocketReset = 1;
 
-	#if defined(STACK_USE_SSL)
-	// If SSL is active, then we need to close it
-	if(MyTCBStub.sslStubID != SSL_INVALID_ID)
-	{
-		SSLTerminate(MyTCBStub.sslStubID);
-		MyTCBStub.sslStubID = SSL_INVALID_ID;
-
-		// Swap the SSL port and local port back to proper values
-		MyTCBStub.remoteHash.Val = MyTCB.localSSLPort.Val;
-		MyTCB.localSSLPort.Val = MyTCB.localPort.Val;
-		MyTCB.localPort.Val = MyTCBStub.remoteHash.Val;
-	}
-
-	// Reset the SSL buffer pointers
-	MyTCBStub.sslRxHead = MyTCBStub.bufferRxStart;
-	MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-	#endif
-	
 	MyTCB.flags.bFINSent = 0;
 	MyTCB.flags.bSYNSent = 0;
 	MyTCB.flags.bRXNoneACKed1 = 0;
@@ -4289,15 +4104,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 	if(wMinRXSize == 0u)
 		wMinRXSize = 1;
 		
-	// SSL connections need to be able to send or receive at least 
-	// a full Alert record, MAC, and FIN
-	#if defined(STACK_USE_SSL)
-	if(TCPIsSSL(hTCP) && wMinRXSize < 25u)
-		wMinRXSize = 25;
-	if(TCPIsSSL(hTCP) && wMinTXSize < 25u)
-		wMinTXSize = 25;
-	#endif
-	
 	// Make sure space is available for minimums
 	ptrTemp = MyTCBStub.bufferEnd - MyTCBStub.bufferTxStart - 1;
 	if(wMinRXSize + wMinTXSize > ptrTemp)
@@ -4333,10 +4139,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 
 	// Find the head pointer to use
 	ptrHead = MyTCBStub.rxHead;
-	#if defined(STACK_USE_SSL)
-	if(TCPIsSSL(hTCP))
-		ptrHead = MyTCBStub.sslRxHead;
-	#endif
 	
 	// If there's out-of-order data pending, adjust the head pointer to compensate
 	if(MyTCB.sHoleSize != -1)
@@ -4357,10 +4159,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 			{
 				MyTCBStub.rxTail = ptrTemp;
 				MyTCBStub.rxHead = ptrTemp;
-
-				#if defined(STACK_USE_SSL)
-				MyTCBStub.sslRxHead = ptrTemp;
-				#endif
 			}
 		}
 	}
@@ -4374,10 +4172,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 			{
 				MyTCBStub.rxTail = ptrTemp;
 				MyTCBStub.rxHead = ptrTemp;
-				
-				#if defined(STACK_USE_SSL)
-				MyTCBStub.sslRxHead = ptrTemp;
-				#endif
 			}
 		}
 	}
@@ -4387,10 +4181,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 		// the pointers to stay in the RX space
 		MyTCBStub.rxTail = ptrTemp;
 		MyTCBStub.rxHead = ptrTemp;
-		
-		#if defined(STACK_USE_SSL)
-		MyTCBStub.sslRxHead = ptrTemp;
-		#endif
 	}
 	
 	// If we need to preserve data that wrapped in the ring, we must copy
@@ -4401,10 +4191,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 			ptrHead - MyTCBStub.bufferRxStart);
 
 		// Move the pointers if they were in front of the tail
-		#if defined(STACK_USE_SSL)
-		if(TCPIsSSL(hTCP) && MyTCBStub.sslRxHead < MyTCBStub.rxTail)
-			MyTCBStub.sslRxHead -= MyTCBStub.bufferRxStart - ptrTemp;
-		#endif
 		if(MyTCBStub.rxHead < MyTCBStub.rxTail)
 			MyTCBStub.rxHead -= MyTCBStub.bufferRxStart - ptrTemp;
 	}
@@ -4416,11 +4202,6 @@ BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE v
 	MyTCB.txUnackedTail = MyTCBStub.bufferTxStart;
 	MyTCBStub.txTail = MyTCBStub.bufferTxStart;
 	MyTCBStub.txHead = MyTCBStub.bufferTxStart;
-	
-	#if defined(STACK_USE_SSL)
-	if(TCPIsSSL(hTCP))
-		MyTCBStub.sslTxHead = MyTCBStub.txHead + 5;
-	#endif
 	
 	// Send a window update to notify remote node of change
 	if(MyTCBStub.smState == TCP_ESTABLISHED)
@@ -4655,621 +4436,6 @@ static void TCPRAMCopyROM(PTR_BASE wDest, BYTE wDestType, ROM BYTE* wSource, WOR
 }
 #endif
 
-/****************************************************************************
-  Section:
-	SSL Functions
-  ***************************************************************************/
-
-
-/*****************************************************************************
-  Function:
-	BOOL TCPRequestSSLMessage(TCP_SOCKET hTCP, BYTE msg)
-
-  Summary:
-	Requests an SSL message to be transmitted.
-
-  Description:
-	This function is called to request that a specific SSL message be
-	transmitted.  This message should only be called by the SSL module.
-	
-  Precondition:
-	TCP is initialized.
-
-  Parameters:
-	hTCP		- TCP connection to use
-	msg			- One of the SSL_MESSAGE types to transmit.
-
-  Return Values:
-	TRUE		- The message was requested.
-	FALSE		- Another message is already pending transmission.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-BOOL TCPRequestSSLMessage(TCP_SOCKET hTCP, BYTE msg)
-{
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	
-	if(msg == SSL_NO_MESSAGE || MyTCBStub.sslReqMessage == SSL_NO_MESSAGE)
-	{
-		MyTCBStub.sslReqMessage = msg;
-		return TRUE;
-	}
-	
-	return FALSE;
-}
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	BOOL TCPSSLIsHandshaking(TCP_SOCKET hTCP)
-
-  Summary:
-	Determines if an SSL session is still handshaking.
-
-  Description:
-	Call this function after calling TCPStartSSLClient until FALSE is
-	returned.  Then your application may continue with its normal data
-	transfer (which is now secured).
-	
-  Precondition:
-	TCP is initialized and hTCP is connected.
-
-  Parameters:
-	hTCP		- TCP connection to check
-
-  Return Values:
-	TRUE		- SSL handshake is still progressing
-	FALSE		- SSL handshake has completed
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-BOOL TCPSSLIsHandshaking(TCP_SOCKET hTCP)
-{
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	return MyTCBStub.Flags.bSSLHandshaking;	
-}
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	BOOL TCPIsSSL(TCP_SOCKET hTCP)
-
-  Summary:
-	Determines if a TCP connection is secured with SSL.
-
-  Description:
-	Call this function to determine whether or not a TCP connection is 
-	secured with SSL.
-	
-  Precondition:
-	TCP is initialized and hTCP is connected.
-
-  Parameters:
-	hTCP		- TCP connection to check
-
-  Return Values:
-	TRUE		- Connection is secured via SSL
-	FALSE		- Connection is not secured
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-BOOL TCPIsSSL(TCP_SOCKET hTCP)
-{
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return FALSE;
-    }
-    
-	SyncTCBStub(hTCP);
-	
-	if(MyTCBStub.sslStubID == SSL_INVALID_ID)
-		return FALSE;
-	
-	return TRUE;
-}
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	void TCPSSLHandshakeComplete(TCP_SOCKET hTCP)
-
-  Summary:
-	Clears the SSL handshake flag.
-
-  Description:
-	This function clears the flag indicating that an SSL handshake is
-	complete.
-	
-  Precondition:
-	TCP is initialized and hTCP is connected.
-
-  Parameters:
-	hTCP		- TCP connection to set
-
-  Returns:
-	None
-
-  Remarks:
-	This function should never be called by an application.  It is used 
-	only by the SSL module itself.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-void TCPSSLHandshakeComplete(TCP_SOCKET hTCP)
-{
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return;
-    }
-    
-	SyncTCBStub(hTCP);
-	MyTCBStub.Flags.bSSLHandshaking = 0;
-}
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	void TCPSSLDecryptMAC(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, WORD len)
-
-  Summary:
-	Decrypts and MACs data arriving via SSL.
-
-  Description:
-	This function decrypts data in the TCP buffer and calculates the MAC over
-	the data.  All data is left in the exact same location in the TCP buffer.
-	It is called to help process incoming SSL records.
-	
-  Precondition:
-	TCP is initialized, hTCP is connected, and ctx's Sbox is loaded.
-
-  Parameters:
-	hTCP		- TCP connection to decrypt in
-	ctx			- ARCFOUR encryption context to use
-	len 		- Number of bytes to crypt
-	inPlace		- TRUE to write back in place, FALSE to write at end of
-					currently visible data.
-
-  Returns:
-	None
-
-  Remarks:
-	This function should never be called by an application.  It is used 
-	only by the SSL module itself.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-void TCPSSLDecryptMAC(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, WORD len)
-{
-	PTR_BASE wSrc, wDest, wBlockLen, wTemp;
-	BYTE buffer[32];
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return;
-    }
-    
-	// Set up the pointers
-	SyncTCBStub(hTCP);
-	wSrc = MyTCBStub.rxTail;
-	wDest = wSrc;
-	
-	// Handle 32 bytes at a time
-	while(len)
-	{
-		// Determine how many bytes we can read
-		wBlockLen = sizeof(buffer);
-		if(wBlockLen > len) // Don't do more than we should
-			wBlockLen = len;
-		
-		// Read those bytes to a buffer
-		if(wSrc + wBlockLen > MyTCBStub.bufferEnd)
-		{// Two part read
-			wTemp = MyTCBStub.bufferEnd - wSrc + 1;
-			TCPRAMCopy((PTR_BASE)buffer, TCP_PIC_RAM, wSrc, MyTCBStub.vMemoryMedium, wTemp);
-			TCPRAMCopy((PTR_BASE)buffer+wTemp, TCP_PIC_RAM, MyTCBStub.bufferRxStart, MyTCBStub.vMemoryMedium, wBlockLen - wTemp);
-			wSrc = MyTCBStub.bufferRxStart + wBlockLen - wTemp;
-		}
-		else
-		{
-			TCPRAMCopy((PTR_BASE)buffer, TCP_PIC_RAM, wSrc, MyTCBStub.vMemoryMedium, wBlockLen);
-			wSrc += wBlockLen;
-		}
-		
-		// Decrypt and hash
-		ARCFOURCrypt(ctx, buffer, wBlockLen);
-		SSLMACAdd(buffer, wBlockLen);
-		
-		// Write decrypted bytes back
-		if(wDest + wBlockLen > MyTCBStub.bufferEnd)
-		{// Two part write
-			wTemp = MyTCBStub.bufferEnd - wDest + 1;
-			TCPRAMCopy(wDest, MyTCBStub.vMemoryMedium, (PTR_BASE)buffer, TCP_PIC_RAM, wTemp);
-			TCPRAMCopy(MyTCBStub.bufferRxStart, MyTCBStub.vMemoryMedium, (PTR_BASE)buffer+wTemp, TCP_PIC_RAM, wBlockLen - wTemp);
-			wDest = MyTCBStub.bufferRxStart + wBlockLen - wTemp;
-		}
-		else
-		{
-			TCPRAMCopy(wDest, MyTCBStub.vMemoryMedium, (PTR_BASE)buffer, TCP_PIC_RAM, wBlockLen);
-			wDest += wBlockLen;
-		}
-		
-		// Update the length remaining
-		len -= wBlockLen;
-	}
-}	
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	void TCPSSLInPlaceMACEncrypt(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, 
-									BYTE* MACSecret, WORD len)
-
-  Summary:
-	Encrypts and MACs data in place in the TCP TX buffer.
-
-  Description:
-	This function encrypts data in the TCP buffer while calcuating a MAC.  
-	When encryption is finished, the MAC is appended to the buffer and 
-	the record will be ready to transmit.
-	
-  Precondition:
-	TCP is initialized, hTCP is connected, and ctx's Sbox is loaded.
-
-  Parameters:
-	hTCP		- TCP connection to encrypt in
-	ctx			- ARCFOUR encryption context to use
-	MACSecret	- MAC encryption secret to use
-	len 		- Number of bytes to crypt
-
-  Returns:
-	None
-
-  Remarks:
-	This function should never be called by an application.  It is used 
-	only by the SSL module itself.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-void TCPSSLInPlaceMACEncrypt(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, BYTE* MACSecret, WORD len)
-{
-	PTR_BASE pos;
-	WORD blockLen;
-	BYTE buffer[32];
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return;
-    }
-    
-	// Set up the pointers
-	SyncTCBStub(hTCP);
-	pos = MyTCBStub.txHead;
-	for(blockLen = 0; blockLen < 5u; blockLen++)
-	{// Skips first 5 bytes for the header
-		if(++pos >= MyTCBStub.bufferRxStart)
-			pos = MyTCBStub.bufferTxStart;
-	}
-	
-	// Handle 32 bytes at a time
-	while(len)
-	{
-		// Determine how many bytes we can read
-		blockLen = sizeof(buffer);
-		if(blockLen > len) // Don't do more than we should
-			blockLen = len;
-		if(blockLen > MyTCBStub.bufferRxStart - pos) // Don't pass the end
-			blockLen = MyTCBStub.bufferRxStart - pos;
-		
-		// Read those bytes to a buffer
-		TCPRAMCopy((PTR_BASE)buffer, TCP_PIC_RAM, pos, MyTCBStub.vMemoryMedium, blockLen);
-		
-		// Hash and encrypt
-		SSLMACAdd(buffer, blockLen);
-		ARCFOURCrypt(ctx, buffer, blockLen);
-		
-		// Put them back
-		TCPRAMCopy(pos, MyTCBStub.vMemoryMedium, (PTR_BASE)buffer, TCP_PIC_RAM, blockLen);
-		
-		// Update the pointers
-		pos += blockLen;
-		len -= blockLen;
-		if(pos >= MyTCBStub.bufferRxStart)
-			pos = MyTCBStub.bufferTxStart;
-	}
-	
-	// Calculate and add the MAC
-	SSLMACCalc(MACSecret, buffer);
-	ARCFOURCrypt(ctx, buffer, 16);
-
-	// Write the MAC to the TX FIFO
-	// Can't use TCPPutArray here because TCPIsPutReady() saves 16 bytes for the MAC
-	// TCPPut* functions use this to prevent writing too much data.  Therefore, the
-	// functionality is duplicated here.
-	
-	len = 16;
-	blockLen = 0;
-	// See if we need a two part put
-	if(MyTCBStub.sslTxHead + len >= MyTCBStub.bufferRxStart)
-	{
-		blockLen = MyTCBStub.bufferRxStart-MyTCBStub.sslTxHead;
-		TCPRAMCopy(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, (PTR_BASE)buffer, TCP_PIC_RAM, blockLen);
-		len -= blockLen;
-		MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-	}
-	
-	TCPRAMCopy(MyTCBStub.sslTxHead, MyTCBStub.vMemoryMedium, (PTR_BASE)&buffer[blockLen], TCP_PIC_RAM, len);
-	MyTCBStub.sslTxHead += len;
-
-}	
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	void TCPSSLPutRecordHeader(TCP_SOCKET hTCP, BYTE* hdr, BOOL recDone)
-
-  Summary:
-	Writes an SSL record header and sends an SSL record.
-
-  Description:
-	This function writes an SSL record header to the pending TCP SSL data, 
-	then indicates that the data is ready to be sent by moving the txHead
-	pointer.
-	
-	If the record is complete, set recDone to TRUE.  The sslTxHead 
-	pointer will be moved forward 5 bytes to leave space for a future 
-	record header.  If the record is only partially sent, use FALSE and
-	to leave the pointer where it is so that more data can be added
-	to the record.  Partial records can only be used for the 
-	SERVER_CERTIFICATE handshake message.
-	
-  Precondition:
-	TCP is initialized, and hTCP is connected with an active SSL session.
-
-  Parameters:
-	hTCP		- TCP connection to write the header and transmit with
-	hdr			- Record header (5 bytes) to send or NULL to just 
-				  move the pointerctx
-	recDone		- TRUE if the record is done, FALSE otherwise
-
-  Returns:
-	None
-
-  Remarks:
-	This function should never be called by an application.  It is used 
-	only by the SSL module itself.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-void TCPSSLPutRecordHeader(TCP_SOCKET hTCP, BYTE* hdr, BOOL recDone)
-{
-	BYTE i;
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return;
-    }
-    
-	// Set up the pointers
-	SyncTCBStub(hTCP);
-	
-	// Write the header if needed
-	if(hdr)
-	{// This is a new record, so insert the header
-		for(i = 0; i < 5u; i++)
-		{
-			TCPRAMCopy(MyTCBStub.txHead, MyTCBStub.vMemoryMedium, (PTR_BASE)hdr+i, TCP_PIC_RAM, sizeof(BYTE));
-			if(++MyTCBStub.txHead >= MyTCBStub.bufferRxStart)
-				MyTCBStub.txHead = MyTCBStub.bufferTxStart;
-		}
-	}
-	
-	// Move the txHead pointer to indicate what data is ready
-	// Also, flush just the header, then all the data.  This shotguns two 
-	// packets down the line, therefore causing immediate ACKs by the 
-	// remote node.  Reconnect handshakes are as much as 60% faster now.
-	TCPFlush(hTCP);
-	MyTCBStub.txHead = MyTCBStub.sslTxHead;
-	TCPFlush(hTCP);
-	
-	// If this record is done, move the sslTxHead forward
-	// to accomodate the next record header
-	if(recDone)
-	{
-		for(i = 0; i < 5u; i++)
-		{// Skip first 5 bytes in TX for the record header
-			if(++MyTCBStub.sslTxHead >= MyTCBStub.bufferRxStart)
-				MyTCBStub.sslTxHead = MyTCBStub.bufferTxStart;
-		}
-	}
-}	
-#endif // SSL
-
-/*****************************************************************************
-  Function:
-	WORD TCPSSLGetPendingTxSize(TCP_SOCKET hTCP)
-
-  Summary:
-	Determines how many bytes are pending for a future SSL record.
-
-  Description:
-	This function determines how many bytes are pending for a future SSL
-	record.
-	
-  Precondition:
-	TCP is initialized, and hTCP is connected with an active SSL connection.
-
-  Parameters:
-	hTCP		- TCP connection to check
-
-  Returns:
-	None
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-WORD TCPSSLGetPendingTxSize(TCP_SOCKET hTCP)
-{
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return 0;
-    }
-    
-	SyncTCBStub(hTCP);
-
-	// Non-SSL connections have no pending SSL data
-	//if(MyTCBStub.sslStubID == SSL_INVALID_ID)
-	//	return 0;
-			
-	// Determine how many bytes are waiting to be written in this record
-	if(MyTCBStub.sslTxHead > MyTCBStub.txHead)
-		return MyTCBStub.sslTxHead - MyTCBStub.txHead - 5;
-	else
-		return (MyTCBStub.bufferRxStart - MyTCBStub.bufferTxStart - 1) - (MyTCBStub.txHead - MyTCBStub.sslTxHead - 1) - 5;
-}
-#endif
-
-
-/*****************************************************************************
-  Function:
-	void TCPSSLHandleIncoming(TCP_SOCKET hTCP)
-
-  Summary:
-	Hands newly arrive TCP data to the SSL module for processing.
-
-  Description:
-	This function processes incoming TCP data as an SSL record and 
-	performs any necessary repositioning and decrypting.
-	
-  Precondition:
-	TCP is initialized, and hTCP is connected with an active SSL session.
-
-  Parameters:
-	hTCP		- TCP connection to handle incoming data on
-
-  Returns:
-	None
-
-  Remarks:
-	This function should never be called by an application.  It is used 
-	only by the SSL module itself.
-  ***************************************************************************/
-#if defined(STACK_USE_SSL)
-void TCPSSLHandleIncoming(TCP_SOCKET hTCP)
-{
-	PTR_BASE prevRxTail, nextRxHead, startRxTail, wSrc, wDest;
-	WORD wToMove, wLen, wSSLBytesThatPoofed, wDecryptedBytes;
-	
-	if(hTCP >= TCP_SOCKET_COUNT)
-    {
-        return;
-    }
-    
-	// Sync the stub
-	SyncTCBStub(hTCP);
-
-	// If new data is waiting
-	if(MyTCBStub.sslRxHead != MyTCBStub.rxHead)
-	{
-		// Reconfigure pointers for SSL use
-		prevRxTail = MyTCBStub.rxTail;
-		nextRxHead = MyTCBStub.rxHead;
-		MyTCBStub.rxTail = MyTCBStub.rxHead;
-		MyTCBStub.rxHead = MyTCBStub.sslRxHead;
-		
-		do
-		{
-			startRxTail = MyTCBStub.rxTail;
-
-			// Handle incoming data.  This function performs deframing of the 
-			// SSL records, decryption, and MAC verification.
-			wSSLBytesThatPoofed = TCPIsGetReady(hTCP);
-			wDecryptedBytes = SSLRxRecord(hTCP, MyTCBStub.sslStubID);
-			wSSLBytesThatPoofed -= TCPIsGetReady(hTCP);
-
-			// Now need to move data to fill the SSL header/MAC/padding hole, 
-			// if there is one
-			if(wSSLBytesThatPoofed)
-			{	
-				// Sync the TCP so we can see if there is a TCP hole
-				SyncTCB();
-
-				// Calculate how big the SSL hole is
-				if(MyTCB.sHoleSize == -1)
-				{// Just need to move pending SSL data
-					wToMove = TCPIsGetReady(hTCP);
-				}
-				else
-				{// A TCP hole exists, so move all data
-					wToMove = TCPIsGetReady(hTCP) + MyTCB.sHoleSize + MyTCB.wFutureDataSize;
-				}
-				
-				// Start with the destination as the startRxTail and source as current rxTail
-				wDest = startRxTail;
-				wSrc = MyTCBStub.rxTail;
-				
-				// If data exists between the end of the buffer and 
-				// the destination, then move it forward
-				if(wSrc > wDest)
-				{
-					wLen = MyTCBStub.bufferEnd - wSrc + 1;
-					if(wLen > wToMove)
-						wLen = wToMove;
-					TCPRAMCopy(wDest, MyTCBStub.vMemoryMedium, 
-							   wSrc, MyTCBStub.vMemoryMedium, wLen);
-					wDest += wLen;
-					wSrc = MyTCBStub.bufferRxStart;
-					wToMove -= wLen;
-				}
-				
-				// If data remains to be moved, fill in to end of buffer
-				if(wToMove)
-				{
-					wLen = MyTCBStub.bufferEnd - wDest + 1;
-					if(wLen > wToMove)
-						wLen = wToMove;
-					TCPRAMCopy(wDest, MyTCBStub.vMemoryMedium, 
-							   wSrc, MyTCBStub.vMemoryMedium, wLen);
-					wDest = MyTCBStub.bufferRxStart;
-					wSrc += wLen;
-					wToMove -= wLen;
-				}
-				
-				// If data still remains, copy from from front + len to front
-				if(wToMove)
-				{
-					TCPRAMCopy(wDest, MyTCBStub.vMemoryMedium,
-							   wSrc, MyTCBStub.vMemoryMedium, wToMove);
-				}
-
-				// Since bytes poofed, we need to move the head pointers 
-				// backwards by an equal amount.
-				MyTCBStub.rxHead -= wSSLBytesThatPoofed;
-				if(MyTCBStub.rxHead < MyTCBStub.bufferRxStart)
-					MyTCBStub.rxHead += MyTCBStub.bufferEnd - MyTCBStub.bufferRxStart + 1;
-				MyTCBStub.sslRxHead = MyTCBStub.rxHead;
-			}
-				
-			// Move tail pointer forward by the number of decrypted bytes ready 
-			// for the application (but not poofed bytes)
-			MyTCBStub.rxTail = startRxTail + wDecryptedBytes;
-			if(MyTCBStub.rxTail > MyTCBStub.bufferEnd)
-				MyTCBStub.rxTail -= MyTCBStub.bufferEnd - MyTCBStub.bufferRxStart + 1;
-			nextRxHead += wDecryptedBytes;
-			
-			// Loop until SSLRxRecord() runs out of data and stops doing 
-			// anything
-		} while(wSSLBytesThatPoofed || (startRxTail != MyTCBStub.rxTail));
-
-		// Restore TCP buffer pointers to point to the decrypted application data 
-		// only
-		if(nextRxHead > MyTCBStub.bufferEnd)
-			nextRxHead -= MyTCBStub.bufferEnd - MyTCBStub.bufferRxStart + 1;
-		MyTCBStub.rxTail = prevRxTail;
-		MyTCBStub.rxHead = nextRxHead;
-	}
-}	
-#endif
 
 
 #endif //#if defined(STACK_USE_TCP)

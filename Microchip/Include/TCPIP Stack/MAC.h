@@ -58,14 +58,9 @@
 
 #include "HardwareProfile.h"
 
-#if defined(ENC100_INTERFACE_MODE) && defined(ENC_CS_TRIS)
-	#error "Error in HardwareProfile.h.  Must select either the ENC28J60 or the ENCX24J600 but not both ENC_CS_TRIS and ENC100_INTERFACE_MODE."
-#endif
 
 
-
-#if !defined(ENC_CS_TRIS) && !defined(ENC100_INTERFACE_MODE) && \
-	 (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
+#if (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
 	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60))
 	#include "TCPIP Stack/ETH97J60.h"
 #else
@@ -91,10 +86,7 @@ typedef struct  __attribute__((aligned(2), packed))
 
 
 	#define RESERVED_HTTP_MEMORY 0ul
-
-#if !defined(STACK_USE_SSL)
 	#define RESERVED_SSL_MEMORY 0ul
-#endif
 
 // MAC RAM definitions
 // ENC28J60 or PIC18F97J60 family internal Ethernet controller
@@ -118,8 +110,7 @@ WORD 	CalcIPBufferChecksum(WORD len);
 void	MACPowerDown(void);
 void	MACEDPowerDown(void);
 void 	MACPowerUp(void);
-#if defined(ENC_CS_TRIS) || defined(ENC100_INTERFACE_MODE) || \
-	(defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
+#if (defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
 	  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60))
 void	WritePHYReg(BYTE Register, WORD Data);
 PHYREG	ReadPHYReg(BYTE Register);

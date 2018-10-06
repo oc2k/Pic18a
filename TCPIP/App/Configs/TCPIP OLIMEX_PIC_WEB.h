@@ -218,8 +218,8 @@
  *   based on module selections above.  If your custom module
  *   requires them otherwise, enable them here.
  */
-//#define STACK_USE_TCP
-//#define STACK_USE_UDP
+#define STACK_USE_TCP // in basic, currently use for "STACK_USE_UART2TCP_BRIDGE" see TCPIP.h defines
+#define STACK_USE_UDP // in basic, currently use for "STACK_USE_DNS", "STACK_USE_NBNS" and "STACK_USE_ANNOUNCE" see TCPIP.h defines
 
 /* Client Mode Configuration
  *   Uncomment following line if this stack will be used in CLIENT
@@ -354,8 +354,8 @@
     // Define the minimum number of bytes free in the TX FIFO before executing callbacks
 	#define HTTP_MIN_CALLBACK_FREE	(16u)
 
-	#define STACK_USE_HTTP_APP_RECONFIG		// Use the AppConfig web page in the Demo App (~2.5kb ROM, ~0b RAM)
-	#define STACK_USE_HTTP_MD5_DEMO			// Use the MD5 Demo web page (~5kb ROM, ~160b RAM)
+	//181006a5PermanenceDelete_/#define STACK_USE_HTTP_APP_RECONFIG		// Use the AppConfig web page in the Demo App (~2.5kb ROM, ~0b RAM)
+	//181006a5PermanenceDelete_/#define STACK_USE_HTTP_MD5_DEMO			// Use the MD5 Demo web page (~5kb ROM, ~160b RAM)
 	//181003e2PermanenceDelete_/180913a1	#define STACK_USE_HTTP_EMAIL_DEMO		// Use the e-mail demo web page
 
 // -- SSL Options --------------------------------------------------------

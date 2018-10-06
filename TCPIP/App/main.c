@@ -133,15 +133,6 @@ void main(void)
     // Initialize application specific hardware
     InitializeBoard();
 
-    #if defined(USE_LCD)
-    // Initialize and display the stack version on the LCD
-    LCDInit();
-    DelayMs(100);
-    strcpypgm2ram((char*)LCDText, "TCPStack " TCPIP_STACK_VERSION "  "
-        "                "); 
-    LCDUpdate();
-    #endif
-
     // Initialize stack-related hardware components that may be 
     // required by the UART configuration routines
     TickInit();
@@ -267,14 +258,6 @@ void main(void)
             #endif
 
         }    
-        #if defined(DERIVE_KEY_FROM_PASSPHRASE_IN_HOST) && defined (MRF24WG)
-            if (g_WpsPassphrase.valid) {
-                WF_ConvPassphrase2Key(g_WpsPassphrase.passphrase.keyLen, g_WpsPassphrase.passphrase.key,
-                g_WpsPassphrase.passphrase.ssidLen, g_WpsPassphrase.passphrase.ssid);
-                WF_SetPSK(g_WpsPassphrase.passphrase.key);
-                g_WpsPassphrase.valid = FALSE;
-            }
-        #endif    /* defined(DERIVE_KEY_FROM_PASSPHRASE_IN_HOST) */
 		#if defined(MRF24WG)
 		{
 			static DWORD t_UpdateImage=0;
@@ -315,11 +298,6 @@ void DisplayIPValue(IP_ADDR IPVal)
 // printf("%u.%u.%u.%u", IPVal.v[0], IPVal.v[1], IPVal.v[2], IPVal.v[3]);
     BYTE IPDigit[4];
     BYTE i;
-#ifdef USE_LCD
-    BYTE j;
-    BYTE LCDPos=16;
-#endif
-
     for(i = 0; i < sizeof(IP_ADDR); i++)
     {
         uitoa((WORD)IPVal.v[i], IPDigit);
@@ -328,18 +306,8 @@ void DisplayIPValue(IP_ADDR IPVal)
             putsUART((char *) IPDigit);
         #endif
 
-        #ifdef USE_LCD
-            for(j = 0; j < strlen((char*)IPDigit); j++)
-            {
-                LCDText[LCDPos++] = IPDigit[j];
-            }
             if(i == sizeof(IP_ADDR)-1)
                 break;
-            LCDText[LCDPos++] = '.';
-        #else
-            if(i == sizeof(IP_ADDR)-1)
-                break;
-        #endif
 
         #if defined(STACK_USE_UART)
             while(BusyUART());
@@ -347,11 +315,6 @@ void DisplayIPValue(IP_ADDR IPVal)
         #endif
     }
 
-    #ifdef USE_LCD
-        if(LCDPos < 32u)
-            LCDText[LCDPos] = 0;
-        LCDUpdate();
-    #endif
 }
 
 // Processes A/D data from the potentiometer
@@ -482,14 +445,6 @@ static void InitializeBoard(void)
 // initialization order.  Ex: When ENC28J60 is on SPI2 with Explorer 16, 
 // MAX3232 ROUT2 pin will drive RF12/U2CTS ENC28J60 CS line asserted, 
 // preventing proper 25LC256 EEPROM operation.
-#if defined(ENC_CS_TRIS)
-    ENC_CS_IO = 1;
-    ENC_CS_TRIS = 0;
-#endif
-#if defined(ENC100_CS_TRIS)
-    ENC100_CS_IO = (ENC100_INTERFACE_MODE == 0);
-    ENC100_CS_TRIS = 0;
-#endif
 #if defined(EEPROM_CS_TRIS)
     EEPROM_CS_IO = 1;
     EEPROM_CS_TRIS = 0;
@@ -501,44 +456,6 @@ static void InitializeBoard(void)
 #if defined(SPIFLASH_CS_TRIS)
     SPIFLASH_CS_IO = 1;
     SPIFLASH_CS_TRIS = 0;
-#endif
-#if defined(PIC24FJ64GA004_PIM)
-    __builtin_write_OSCCONL(OSCCON & 0xBF);  // Unlock PPS
-
-    // Remove some LED outputs to regain other functions
-    LED1_TRIS = 1;        // Multiplexed with BUTTON0
-    LED5_TRIS = 1;        // Multiplexed with EEPROM CS
-    LED7_TRIS = 1;        // Multiplexed with BUTTON1
-    
-    // Inputs
-    RPINR19bits.U2RXR = 19;            //U2RX = RP19
-    RPINR22bits.SDI2R = 20;            //SDI2 = RP20
-    RPINR20bits.SDI1R = 17;            //SDI1 = RP17
-    
-    // Outputs
-    RPOR12bits.RP25R = U2TX_IO;        //RP25 = U2TX  
-    RPOR12bits.RP24R = SCK2OUT_IO;     //RP24 = SCK2
-    RPOR10bits.RP21R = SDO2_IO;        //RP21 = SDO2
-    RPOR7bits.RP15R = SCK1OUT_IO;      //RP15 = SCK1
-    RPOR8bits.RP16R = SDO1_IO;         //RP16 = SDO1
-    
-    AD1PCFG = 0xFFFF;                  //All digital inputs - POT and Temp are on same pin as SDO1/SDI1, which is needed for ENC28J60 commnications
-
-    __builtin_write_OSCCONL(OSCCON | 0x40); // Lock PPS
-#endif
-
-
-
-
-
-#if defined(DSPICDEM11)
-    // Deselect the LCD controller (PIC18F252 onboard) to ensure there is no SPI2 contention
-    LCDCTRL_CS_TRIS = 0;
-    LCDCTRL_CS_IO = 1;
-
-    // Hold the codec in reset to ensure there is no SPI2 contention
-    CODEC_RST_TRIS = 0;
-    CODEC_RST_IO = 0;
 #endif
 
 #if defined(SPIRAM_CS_TRIS)

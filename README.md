@@ -9,23 +9,21 @@ Pic18a1(f67j60)TCPIP__180923b
 
 #### new tasks
 *
-* new task v: remove ???STACK_USE_TCP??? </br>
-* new task v: remove STACK_USE_SSL </br>
-* new task v: remove DSPICDEM11 </br>
-* new task v: remove PIC24FJ64GA004_PIM </br>
-* new task v: remove ENC100_CS_TRIS </br>
-* new task v: remove ENC_CS_TRIS </br>
-* new task v: remove DERIVE_KEY_FROM_PASSPHRASE_IN_HOST </br>
-* new task v: remove USE_LCD (include LCD_DATA_IO, LCD_DATA0_IO,..) </br>
+* new task v: blank </br>
 *
 
 ---------------
 ## processing task
-- 181006a1, remove Wifi no use code (WF_CS_TRIS and relevant WF_MODULE_NUMBER, STACK_USE_AUTOUPDATE_HTTPSERVER)
-- - note: 
-- - 1. need to deleted "NON_MCHP_MAC" define, relevant WF_CS_TRIS refer to "MAC.h"
+-
+- 181006a7, it is confirm to use **STACK_USE_TCP** due to define *STACK_USE_UART2TCP_BRIDGE* see TCPIP.h
 
 #### done record
+- - 181006a6, remove STACK_USE_RSA_ENCRYPT and relevant (STACK_USE_RSA,STACK_USE_BIGINT)
+- - 181006a5, remove STACK_USE_SSL (permanence delete STACK_USE_HTTP_MD5_DEMO) in config and relevant STACK_USE_ARCFOUR,STACK_USE_MD5,STACK_USE_SHA1,STACK_USE_RANDOM
+- - 181006a4, remove PIC24FJ64GA004_PIM,DSPICDEM11
+- - 181006a3, remove DERIVE_KEY_FROM_PASSPHRASE_IN_HOST, ENC_CS_TRIS, ENC100_CS_TRIS and ENC100_INTERFACE_MODE
+- - 181006a2, remove USE_LCD (include LCD_DATA_IO, LCD_DATA0_IO,..)
+- - 181006a1, remove Wifi no use code (WF_CS_TRIS) and relevant WF_MODULE_NUMBER, STACK_USE_AUTOUPDATE_HTTPSERVER defines
 - - from 181003 to 181004: see below permanent remove list
 - - 181001a4, remove __C32**,__PIC24**,__PIC32
 - - 181001a3, remove __C30**
@@ -77,6 +75,8 @@ Pic18a1(f67j60)TCPIP__180923b
 	| STACK_USE_BERKELEY_API|181004a8PermanenceDelete|see above
 	| STACK_USE_ZEROCONF_LINK_LOCAL|181004a9PermanenceDelete|see above
 	| STACK_USE_ZEROCONF_MDNS_SD|181004a10PermanenceDelete|see above
+	| STACK_USE_HTTP_MD5_DEMO|181006a5PermanenceDelete|see above
+	| STACK_USE_HTTP_APP_RECONFIG|181006a5PermanenceDelete|see above
 	
 
 ----

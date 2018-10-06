@@ -141,14 +141,6 @@ typedef struct
     } Flags; // 12(2)
 	WORD_VAL remoteHash;	// 13(2) Consists of remoteIP, remotePort, localPort for connected sockets.  It is a localPort number only for listening server sockets.
 
-    #if defined(STACK_USE_SSL)
-    PTR_BASE sslTxHead;		// Position of data being written in next SSL application record
-    						//   Also serves as cache of localSSLPort when smState = TCP_LISTENING
-    PTR_BASE sslRxHead;		// Position of incoming data not yet handled by SSL
-    BYTE sslStubID;			// Which sslStub is associated with this connection
-    BYTE sslReqMessage;		// Currently requested SSL message
-    #endif
-
 	BYTE vMemoryMedium;		// 14(1) Which memory medium the TCB is actually stored
 	
 } TCB_STUB; // total is 28 (1Ch) __/ie: 8x2+4 +(2+1)+(2+2+1) = 20+8 = 28
@@ -182,9 +174,6 @@ typedef struct
 		unsigned char filler : 3;		// future use
     } flags;							// _..5___(1) 
 	WORD		wRemoteMSS;				// 8(4) Maximum Segment Size option advirtised by the remote node during initial handshaking
-    #if defined(STACK_USE_SSL)
-    WORD_VAL	localSSLPort;			// _x_(4) Local SSL port number (for listening sockets)
-    #endif
 	BYTE		retryCount;				// _..6___(1) Counter for transmission retries
 	BYTE		vSocketPurpose;			// _..7___(1) Purpose of socket (as defined in TCPIPConfig.h)
 } TCB;					// total is 4x8 + 7 = 39 (27h)
@@ -288,22 +277,6 @@ WORD TCPGetTxFIFOFull(TCP_SOCKET hTCP);
 #define TCP_ADJUST_PRESERVE_RX		0x04u	// Resize flag: attempt to preserve RX buffer
 #define TCP_ADJUST_PRESERVE_TX		0x08u	// Resize flag: attempt to preserve TX buffer
 BOOL TCPAdjustFIFOSize(TCP_SOCKET hTCP, WORD wMinRXSize, WORD wMinTXSize, BYTE vFlags);
-
-#if defined(STACK_USE_SSL)
-BOOL TCPStartSSLClient(TCP_SOCKET hTCP, BYTE* host);
-BOOL TCPStartSSLClientEx(TCP_SOCKET hTCP, BYTE* host, void * buffer, BYTE suppDataType);
-BOOL TCPStartSSLServer(TCP_SOCKET hTCP);
-BOOL TCPAddSSLListener(TCP_SOCKET hTCP, WORD port);
-BOOL TCPRequestSSLMessage(TCP_SOCKET hTCP, BYTE msg);
-BOOL TCPSSLIsHandshaking(TCP_SOCKET hTCP);
-BOOL TCPIsSSL(TCP_SOCKET hTCP);
-void TCPSSLHandshakeComplete(TCP_SOCKET hTCP);
-void TCPSSLDecryptMAC(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, WORD len);
-void TCPSSLInPlaceMACEncrypt(TCP_SOCKET hTCP, ARCFOUR_CTX* ctx, BYTE* MACSecret, WORD len);
-void TCPSSLPutRecordHeader(TCP_SOCKET hTCP, BYTE* hdr, BOOL recDone);
-WORD TCPSSLGetPendingTxSize(TCP_SOCKET hTCP);
-void TCPSSLHandleIncoming(TCP_SOCKET hTCP);
-#endif
 
 /*****************************************************************************
   Summary:
