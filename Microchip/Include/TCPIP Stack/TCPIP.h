@@ -200,4 +200,7 @@
 #if defined(STACK_USE_DNS)
 	#include "TCPIP Stack/DNS.h"
 #endif
+/** INCLUDES *******************************************************/
+#include "genSKEL.h"
+
 #endif

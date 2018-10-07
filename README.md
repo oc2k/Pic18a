@@ -14,10 +14,11 @@ Pic18a1(f67j60)TCPIP__180923b
 
 ---------------
 ## processing task
--
-- 181006a7, it is confirm to use **STACK_USE_TCP** due to define *STACK_USE_UART2TCP_BRIDGE* see TCPIP.h
+- 181007a1, added genSKEL (c,h) -- note: compiler is not accepted blank c file, thus added u8i variable as new data temporary
+- 181007a, PURPOSE: added genSKEL (c,h) and define project fixed RAM/ROM parameter defines
 
 #### done record
+- - 181006a7, it is confirm to use **STACK_USE_TCP** due to define *STACK_USE_UART2TCP_BRIDGE* see TCPIP.h
 - - 181006a6, remove STACK_USE_RSA_ENCRYPT and relevant (STACK_USE_RSA,STACK_USE_BIGINT)
 - - 181006a5, remove STACK_USE_SSL (permanence delete STACK_USE_HTTP_MD5_DEMO) in config and relevant STACK_USE_ARCFOUR,STACK_USE_MD5,STACK_USE_SHA1,STACK_USE_RANDOM
 - - 181006a4, remove PIC24FJ64GA004_PIM,DSPICDEM11
