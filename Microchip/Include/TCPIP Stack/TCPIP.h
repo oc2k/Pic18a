@@ -203,4 +203,5 @@
 /** INCLUDES *******************************************************/
 #include "genSKEL.h"
 
+#include "ssd/ssdC18Init.h"
 #endif

@@ -184,6 +184,19 @@
 #define MY_DEFAULT_SECONDARY_DNS_BYTE3	(0ul)
 #define MY_DEFAULT_SECONDARY_DNS_BYTE4	(0ul)
 
+// ===================================================================================
+// 0800:	64,01,	64,01,	3E,01,	64,01;	29,01,	1B,01,	0E,01,	F8,00; __>> 356, 356, 318, 356; 297, 283, 270, 248;
+// ===================================================================================
+// -----------------------------
+#define MY_DEFAULT_PROJ_PARAM0			(356ul)	// PP0,8 _n_rom00
+#define MY_DEFAULT_PROJ_PARAM1			(356ul)	// PP1,8 _n_rom02
+#define MY_DEFAULT_PROJ_PARAM2			(318ul)	// PP2,9 _n_rom04
+#define MY_DEFAULT_PROJ_PARAM3			(356ul)	// PP3,10 _n_rom06
+#define MY_DEFAULT_PROJ_PARAM4			(297ul)	// PP4,11 _n_rom08
+#define MY_DEFAULT_PROJ_PARAM5			(283ul)	// PP5,12 _n_rom0A
+#define MY_DEFAULT_PROJ_PARAM6			(270ul)	// PP6,13 _n_rom0C
+#define MY_DEFAULT_PROJ_PARAM7			(248ul)	// PP7,14 _n_rom0E 
+
 // =======================================================================
 //   PIC32MX7XX/6XX MAC Layer Options
 //   If not using a PIC32MX7XX/6XX device, ignore this section.

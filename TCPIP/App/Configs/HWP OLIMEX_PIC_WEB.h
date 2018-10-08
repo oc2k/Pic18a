@@ -65,7 +65,34 @@
 	#endif
 #endif
 
-
+//======================================
+#define _TRUE			1
+#define _FALSE			0
+#define __constPIC18F67J60_FlashRomEndPTR					0x01FFF6 // REMINDER: the configuration bits address: 30000-3FFFFF
+#define __constPIC18F67J60_RWProgMemStartPTR				0x010000 //160104a8 Detect Program Code overlap to RomPARAM (0x010000) //__>>0x***400 as erase AREA// Read WRITE start from (***400 - ..) as Rom Parameters store Zone in 0o3G project
+#define __constPIC18F67J60_ROProgMemStartPTR				0x001000 //__>>0x***400 // Read ONLY start from (***400 - ..) as Rom Parameters store Zone in 0o3G project
+//	V
+	#define __rom01SystemReadONLYAddressID						__constPIC18F67J60_ROProgMemStartPTR
+	#define __rom04SystemStartYEAR								0x2018
+	#define __rom06w8VersionINFO1								01
+	#define __rom07w8RES_PARAM1									0x05
+//	#define __rom08w16RES_zero
+	#define __rom0Aw16RES_PARAM2								0x7809
+	#define __rom0Cw16RES_PARAM3								0x200
+	#define __rom0Ew16RES_THRESHOLD								0x600
+	#define __strVersionINFO2			"V1.00T1"
+	#define __strVI2SPACE				"\0\0\0\0\0\0\0"
+	#define __strVersionINFO3			"OCT 07 2018"
+	#define __strVI3SPACE				"\0\0\0"
+	#define __strVersionINFO4			"14:44:35"
+	#define __strVI4SPACE				"\0\0\0\0\0\0"
+	#define __strVersionINFO5			"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+	#define __strVersionINFO6			"0.1"
+	#define __strVI6SPACE				"\0\0\0\0\0\0\0\0\0\0\0"
+	#define __strVersionINFO7			"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+	#define __strVer8HostNAME			"nn1BOARD\0\0\0\0\0\0\0"
+//	^
+//======================================
 // Clock frequency values
 // These directly influence timed events using the Tick module.  They also are used for UART and SPI baud rate generation.
 #define GetSystemClock()		(41666667ul)			// Hz
@@ -144,4 +171,51 @@
 #define putcUART(a)			WriteUSART(a)
 #define putrsUART(a)		putrsUSART((far rom char*)a)
 
+//-----------------------------------
+//- Old Project macros for inline assembly
+//-----------------------------------
+#define __NOP()					{_asm nop _endasm}
+#define __CLRWDT()				{_asm clrwdt _endasm}
+#define __SLEEP()				{_asm sleep _endasm}
+#define __RESET()				{_asm reset _endasm}
+#define __MOVLB(f)				{_asm movlb f _endasm}
+#define __RLCF(f,dest,access)	{_asm rlcf f,dest,access _endasm}
+#define __RLNCF(f,dest,access)	{_asm rlncf f,dest,access _endasm}
+#define __RRCF(f,dest,access)	{_asm rrcf f,dest,access _endasm}
+#define __RRNCF(f,dest,access)	{_asm rrncf f,dest,access _endasm}
+#define __SWAPF(f,dest,access)	{_asm swapf f,dest,access _endasm }
+#define __GOTO(loc) 			{_asm goto loc _endasm}
+#define __w16LOW(a)				(a & 0xFF)
+#define __w16HIGH(a)			((a>>8) & 0xFF)
+
+//-----------------------------------
+// Block Pointer (FSR) Operation macro
+//-----------------------------------
+// - Rev01b, 160120c11 - add output checksum
+#define __POSTINC0L(a)			(w8OutputCS += a, INDF0 = a, FSR0L ++) //Rev01b__>>(INDF0 = a, FSR0L ++)
+#define __POSTINC0LwoCS(a)		(INDF0 = a, FSR0L ++) // should be use debugMSG
+#define __POSTINC0LhexfCS(a)	(w8HexfileCS += a, INDF0 = a, FSR0L ++) //Rev01b__>>(INDF0 = a, FSR0L ++)
+
+
+//----------------------------------- update in 140402a
+// RomREAD
+// (1) tblrd (TBLRD*)
+// (2) tblrdpostinc (TBLRD*+)
+// (3) tblrdpostdec (TBLRD*-)
+// (4) tblrdpreinc (TBLRD+*)
+// RomWRITE
+// (1) tblwt (TBLWT*)
+// (2) tblwtpostinc (TBLWT*+)
+// (3) tblwtpostdec (TBLWT*-)
+// (4) tblwtpreinc (TBLWT+*)
+//----------------------------------- update in 140402a
+#define __TBLRD() {_asm tblrd _endasm}
+#define __TBLRDPOSTINC() {_asm tblrdpostinc _endasm}
+#define __TBLRDPOSTDEC() {_asm tblrdpostdec _endasm}
+#define __TBLRDPREINC() {_asm tblrdpreinc _endasm}
+#define __TBLWT() {_asm tblwt _endasm}
+#define __TBLWTPOSTINC() {_asm tblwtpostinc _endasm}
+#define __TBLWTPOSTDEC() {_asm tblwtpostdec _endasm}
+#define __TBLWTPREINC() {_asm tblwtpreinc _endasm}
+//----------------------------------- update in 140402a
 #endif // #ifndef HARDWARE_PROFILE_H

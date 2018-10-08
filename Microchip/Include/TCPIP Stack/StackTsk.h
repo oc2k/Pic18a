@@ -85,8 +85,19 @@ typedef struct __attribute__((__packed__))
 } NODE_INFO;
 
 // Application-dependent structure used to contain address information
-typedef struct __attribute__((__packed__)) appConfigStruct 
+typedef struct _Pic18AppCONFIGStruct //instead of __attribute__((__packed__)) appConfigStruct 
 {
+	// ---------------=mROMStructs**COPYTo**RAM=---------------------------(30h)
+	//	mROMStructsCOPYToRAM
+	//-----------------------(SPIBrakeAngle share to BrakeAngle and SplitBrakeAngle)-----
+	WORD	wSPIProjPARAM0;		// _n_rom00 as [0,1] default value () 
+	WORD	wSPIProjPARAM1;		// _n_rom02 as [2,3] default value () 
+	WORD	wSPIProjPARAM2;		// _n_rom04 as [4,5] default value () 
+	WORD	wSPIProjPARAM3;		// _n_rom06 as [6,7] default value () 
+	WORD	wSPIProjPARAM4;		// _n_rom08 as [8,9] default value () 
+	WORD	wSPIProjPARAM5;		// _n_rom0A as [a,b] default value () 
+	WORD	wSPIProjPARAM6;		// _n_rom0C as [c,d] default value () 
+	WORD	wSPIProjPARAM7;		// _n_rom0E as [e,f] default value () 
 	IP_ADDR		MyIPAddr;               // IP address
 	IP_ADDR		MyMask;                 // Subnet mask
 	IP_ADDR		MyGateway;              // Default Gateway
@@ -94,20 +105,30 @@ typedef struct __attribute__((__packed__)) appConfigStruct
 	IP_ADDR		SecondaryDNSServer;     // Secondary DNS Server
 	IP_ADDR		DefaultIPAddr;          // Default IP address
 	IP_ADDR		DefaultMask;            // Default subnet mask
+	DWORD		dRESERVED;			// (dw) RESERVED
+	// ---------------=mROMStructs**COPYTo**RAM=---------------------------(30h)
 	BYTE		NetBIOSName[16];        // NetBIOS name
+	MAC_ADDR	MyMACAddr;              // Application MAC address
 	struct
 	{
-		unsigned char : 6;
-		unsigned char bIsDHCPEnabled : 1;
-		unsigned char bInConfigMode : 1;
+		unsigned char : 6; // b0-b5
+		unsigned char bIsDHCPEnabled : 1; // b6
+		unsigned char bInConfigMode : 1; // b7 
 	} Flags;                            // Flag structure
-	MAC_ADDR	MyMACAddr;              // Application MAC address
+	BYTE		bRESERVED;					// (1b)
+	DWORD		wRESERVED1;					// (4b)__/dw
+	DWORD		wRESERVED2;					// (4b)__/dw
+	DWORD		wRESERVED3;					// (4b)__/dw
+	DWORD		wRESERVED4;					// (4b)__/dw
+	DWORD		wRESERVED5;					// (4b)__/dw
+	DWORD		wRESERVED6;					// (4b)__/dw
+	// ------=SpecialForRAM=--------
 
 } APP_CONFIG;
 
-#ifndef THIS_IS_STACK_APPLICATION
+//#ifndef THIS_IS_STACK_APPLICATION
     extern APP_CONFIG AppConfig;
-#endif
+//#endif
 
 
 void StackInit(void);

@@ -9,15 +9,20 @@ Pic18a1(f67j60)TCPIP__180923b
 
 #### new tasks
 *
-* new task v: blank </br>
+* new task v: halSCI </br>
+* new task v: halA2D </br>
 *
 
 ---------------
 ## processing task
-- 181007a1, added genSKEL (c,h) -- note: compiler is not accepted blank c file, thus added u8i variable as new data temporary
-- 181007a, PURPOSE: added genSKEL (c,h) and define project fixed RAM/ROM parameter defines
-
+- 181008a2, clear InitializeBoard code as prepare add hal basic code
+- 181008a1, add basic code into ssdC18Init (c,h)
+- 181008a, PURPOSE: clear main.c code
 #### done record
+- - 181007a3, added ssdC18Init (c,h) as C18 start/shutdown initial code
+- - 181007a2, as defination project fixed RAM/ROM parameter and settle appconf structure from main.c
+- - 181007a1, added genSKEL (c,h) -- note: compiler is not accepted blank c file, thus added u8i variable as new data temporary
+- - 181007a, PURPOSE: added genSKEL (c,h) and define project fixed RAM/ROM parameter defines
 - - 181006a7, it is confirm to use **STACK_USE_TCP** due to define *STACK_USE_UART2TCP_BRIDGE* see TCPIP.h
 - - 181006a6, remove STACK_USE_RSA_ENCRYPT and relevant (STACK_USE_RSA,STACK_USE_BIGINT)
 - - 181006a5, remove STACK_USE_SSL (permanence delete STACK_USE_HTTP_MD5_DEMO) in config and relevant STACK_USE_ARCFOUR,STACK_USE_MD5,STACK_USE_SHA1,STACK_USE_RANDOM

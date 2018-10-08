@@ -73,8 +73,8 @@ void DoUARTConfig(void);
 	#define SaveAppConfig(a)
 #endif
 
-void SMTPDemo(void);
-void PingDemo(void);
+//void SMTPDemo(void);
+//void PingDemo(void);
 
 
 // Define a header structure for validating the AppConfig data structure in EEPROM/Flash

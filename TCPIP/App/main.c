@@ -66,11 +66,7 @@
 // Include functions specific to this stack application
 #include "Main.h"
 #include "Custom_SPI.h"
-
-// Declare AppConfig structure and some other supporting stack variables
-APP_CONFIG AppConfig;
-static unsigned short wOriginalAppConfigChecksum;    // Checksum of the ROM defaults for AppConfig
-BYTE AN0String[8];
+#pragma udata
 #ifdef	WEBPAGE_DEMO_UART
 #pragma udata UART_BUFFER
 char UART_Buffer[BUFFER_SIZE];
@@ -87,9 +83,19 @@ volatile unsigned char RCIndex=0, TCIndex=0;
 
 // Private helper functions.
 // These may or may not be present in all applications.
-static void InitAppConfig(void);
 static void InitializeBoard(void);
+static void InitAppConfig(void);
 static void ProcessIO(void);
+
+// RAM variables
+static unsigned short wOriginalAppConfigChecksum;    // Checksum of the ROM defaults for AppConfig
+static BYTE AN0String[8];
+//
+//----------------------------------------------------------------
+//These are your actual interrupt handling routines.
+//----------------------------------------------------------------
+#pragma code
+
 //
 // PIC18 Interrupt Service Routines
 // 
@@ -130,6 +136,10 @@ void main(void)
     static DWORD t = 0;
     static DWORD dwLastIP = 0;
 
+	__NOP();  // (BP) Help to track startup CODE
+	aSsdInitMcu(); // SSD
+	GINTSetting(); // INT CONF
+
     // Initialize application specific hardware
     InitializeBoard();
 
@@ -138,7 +148,7 @@ void main(void)
     TickInit();
 
     // Initialize Stack and application related NV variables into AppConfig.
-    InitAppConfig();
+	InitAppConfig(); // (BP)
 
     // Initiates board setup process if button is depressed 
     // on startup
@@ -214,6 +224,8 @@ void main(void)
     // down into smaller pieces so that other tasks can have CPU time.
     while(1)
     {
+		//__CLRWDTWDI_IOtoggle(); //__>>WDI_IOtoggle();
+		aGenSystemClock();
         // Blink LED0 (right most one) every second.
         if(TickGet() - t >= TICK_SECOND/2ul)
         {
@@ -257,38 +269,7 @@ void main(void)
                 AnnounceIP();
             #endif
 
-        }    
-		#if defined(MRF24WG)
-		{
-			static DWORD t_UpdateImage=0;
-			extern UINT8 Flag_ImageUpdate_running;
-			if(Flag_ImageUpdate_running == 1)
-			{
-				UINT8 buf_command[4];
-				if( (TickGet() - t_UpdateImage) >= TICK_SECOND * 120ul)
-				{
-					putsUART((char *)"Update Firmware timeout, begin to restore..\r\n");
-					buf_command[0]=UPDATE_CMD_ERASE0; //Erase bank0
-					buf_command[1]=UPDATE_SERITY_KEY_1; 
-					buf_command[2]=UPDATE_SERITY_KEY_2; 
-					buf_command[3]=UPDATE_SERITY_KEY_3; 
-					SendSetParamMsg(PARAM_FLASH_update, buf_command, 4);
-					buf_command[0]=UPDATE_CMD_CPY_1TO0; //Copy bank1 to bank0
-					buf_command[1]=UPDATE_SERITY_KEY_1; 
-					buf_command[2]=UPDATE_SERITY_KEY_2; 
-					buf_command[3]=UPDATE_SERITY_KEY_3; 
-					SendSetParamMsg(PARAM_FLASH_update, buf_command, 4);
-					putsUART((char *)"restore Done\r\n");
-					Flag_ImageUpdate_running = 0;
-				}
-					
-			}
-			else
-			{
-				t_UpdateImage = TickGet();
-			}
-		}
-		#endif
+        }
     }
 }
 
@@ -362,7 +343,9 @@ static void ProcessIO(void)
     None
   ***************************************************************************/
 static void InitializeBoard(void)
-{    
+{
+
+#if 0
     // LEDs
     LED0_TRIS = 0;
     LED1_TRIS = 0;
@@ -439,7 +422,7 @@ static void InitializeBoard(void)
         while(ADCON0bits.GO);
         ADCON1bits.ADCAL = 0;
     #endif
-
+#endif
 
 // Deassert all chip select lines so there isn't any problem with 
 // initialization order.  Ex: When ENC28J60 is on SPI2 with Explorer 16, 
@@ -493,7 +476,7 @@ static void InitializeBoard(void)
 // that locate the MAC address at 0x1FFF0.  Syntax below is for MPLAB C 
 // Compiler for PIC18 MCUs. Syntax will vary for other compilers.
 //#pragma romdata MACROM=0x1FFF0
-static ROM BYTE SerializedMACAddress[6] = {MY_DEFAULT_MAC_BYTE1, MY_DEFAULT_MAC_BYTE2, MY_DEFAULT_MAC_BYTE3, MY_DEFAULT_MAC_BYTE4, MY_DEFAULT_MAC_BYTE5, MY_DEFAULT_MAC_BYTE6};
+//static ROM BYTE SerializedMACAddress[6] = {MY_DEFAULT_MAC_BYTE1, MY_DEFAULT_MAC_BYTE2, MY_DEFAULT_MAC_BYTE3, MY_DEFAULT_MAC_BYTE4, MY_DEFAULT_MAC_BYTE5, MY_DEFAULT_MAC_BYTE6};
 //#pragma romdata
 
 static void InitAppConfig(void)
@@ -510,7 +493,7 @@ static void InitAppConfig(void)
         
         AppConfig.Flags.bIsDHCPEnabled = TRUE;
         AppConfig.Flags.bInConfigMode = TRUE;
-        memcpypgm2ram((void*)&AppConfig.MyMACAddr, (ROM void*)SerializedMACAddress, sizeof(AppConfig.MyMACAddr));
+//        memcpypgm2ram((void*)&AppConfig.MyMACAddr, (ROM void*)SerializedMACAddress, sizeof(AppConfig.MyMACAddr));
 //        {
 //            _prog_addressT MACAddressAddress;
 //            MACAddressAddress.next = 0x157F8;
