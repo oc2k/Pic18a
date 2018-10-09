@@ -204,4 +204,8 @@
 #include "genSKEL.h"
 
 #include "ssd/ssdC18Init.h"
+
+#if defined (STACK_USE_HAL_A2D)
+#include "hal/halA2D.h"
+#endif
 #endif

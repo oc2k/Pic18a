@@ -85,7 +85,6 @@ volatile unsigned char RCIndex=0, TCIndex=0;
 // These may or may not be present in all applications.
 static void InitializeBoard(void);
 static void InitAppConfig(void);
-static void ProcessIO(void);
 
 // RAM variables
 static unsigned short wOriginalAppConfigChecksum;    // Checksum of the ROM defaults for AppConfig
@@ -105,6 +104,7 @@ static BYTE AN0String[8];
     void LowISR(void)
     {
         TickUpdate();
+		isrOsSystemCLOCK(); //T1 as countdown
     }
     
     #pragma interruptlow HighISR
@@ -210,6 +210,15 @@ void main(void)
     #if defined(STACK_USE_UART2TCP_BRIDGE)
     UART2TCPBridgeInit();
     #endif
+	// Enable INTs
+	INTenableALL(); // (BP) or set PC for jump here
+
+// --------------------------
+// temporary test code, after test close area
+// --------------------------
+	__NOP(); //cHalINV_u16iCalculateBrakeREL(); //__UWord8PushIntoFifoBuffer (10,0x98,(UINT)&TxBLOCK); //__>>w16i = 0; //dIfTknCMDTool_u16iAsSaveBrakeRELnConvANGLE(); //cHalINV_u16iUpdatedBrakeREL(); //putsUSARTxblock((char *)AppConfig.NetBIOSName); //AppConfig.MyIPAddr.Val=0x0101A8C0; //__>>putrsTxbPENDING("Testing"); //	DelayMs(10); __>>// __TopFsr0SourceFsr2TargetCopyAndASCII(5,(UINT)&rcbuf.data[0],(UINT)&txbuf.buffer[0]);
+	__NOP(); //__>>bHalINV_CAMnIsON(Pic18RamSysPInnParam.wCam0CM2OnABS,Pic18RamSysPInnParam.wCam0CM3OffDELTA); //__HalInvCalibBUFwCurrentSpdBrRELnCLEAR(); //__>>__UWord8PushIntoFifoBuffer(__constHalInvCalibBUFwCurrentSpdBrakeByteSIZE,0,(UINT)&HalInvCalibBUFFER);//__>>w16j = HmiTools_u16iMachineANGLE(w16i); //dIfTknCMDTool_u16iAsInputANGLEConvToBrakeREL(); //sendAllTxbPENDING(); //osTools_TxblockIPValue(AppConfig.MyIPAddr); //__>>__UWord8PushIntoFifoBuffer (10,0x98,(UINT)&txbuf.buffer[0]); //__>>memset((void*)&HalInvCalibBUFFER, 0x00, __constHalInvCalibBUFwCurrentSpdBrRELByteSIZE);
+
 
     // Now that all items are initialized, begin the co-operative
     // multitasking loop.  This infinite loop will continuously 
@@ -225,14 +234,16 @@ void main(void)
     while(1)
     {
 		//__CLRWDTWDI_IOtoggle(); //__>>WDI_IOtoggle();
+		// --------------------------
 		aGenSystemClock();
-        // Blink LED0 (right most one) every second.
-        if(TickGet() - t >= TICK_SECOND/2ul)
-        {
-            t = TickGet();
-            LED0_IO ^= 1;
-        }
 
+        // Blink LED0 (right most one) every second.
+		//		if(TickGet() - t >= TICK_SECOND/2ul)
+		//		{
+		//			t = TickGet();
+		//			LED1_IO ^= 1; //__>>LED0_IO
+		//			//BuildERROR>> memcpy((void*)(UCHAR8*)txbuf.buffer[0], (void*)&ch[0], 4));
+		//		}
         // This task performs normal stack task including checking
         // for incoming packet, type of packet and calling
         // appropriate stack entity to process it.
@@ -240,12 +251,6 @@ void main(void)
         
         // This tasks invokes each of the core stack application tasks
         StackApplications();
-
-	    //180920a2    #if defined(STACK_USE_ICMP_CLIENT)
-	    //180920a2    PingDemo();
-	    //180920a2    #endif
-
-        ProcessIO();
 
         // If the local IP address has changed (ex: due to DHCP lease change)
         // write the new IP address to the LCD display, UART, and Announce 
@@ -298,29 +303,6 @@ void DisplayIPValue(IP_ADDR IPVal)
 
 }
 
-// Processes A/D data from the potentiometer
-static void ProcessIO(void)
-{
-    // AN0 should already be set up as an analog input
-    ADCON0bits.GO = 1;
-
-    // Wait until A/D conversion is done
-    while(ADCON0bits.GO);
-
-    // AD converter errata work around (ex: PIC18F87J10 A2)
-    #if !defined(__18F87J50) && !defined(_18F87J50) && !defined(__18F87J11) && !defined(_18F87J11) 
-    {
-        BYTE temp = ADCON2;
-        ADCON2 |= 0x7;    // Select Frc mode by setting ADCS0/ADCS1/ADCS2
-        ADCON2 = temp;
-    }
-    #endif
-
-    // Convert 10-bit value into ASCII string
-    uitoa(*((WORD*)(&ADRESL)), AN0String);
-}
-
-
 /****************************************************************************
   Function:
     static void InitializeBoard(void)
@@ -345,111 +327,40 @@ static void ProcessIO(void)
 static void InitializeBoard(void)
 {
 
-#if 0
-    // LEDs
-    LED0_TRIS = 0;
-    LED1_TRIS = 0;
-    LED2_TRIS = 0;
-    LED3_TRIS = 0;
-    LED4_TRIS = 0;
-    LED5_TRIS = 0;
-    LED6_TRIS = 0;
-    LED7_TRIS = 0;
-    LED_PUT(0x00);
+	// [ONBOARD] User init
+	// (a1) Hw ON Board -- WATCHDOG Pin
+	__ssdInitWDI(); //__>>WDI_TRIS = 0;
 
-    // Enable 4x/5x/96MHz PLL on PIC18F87J10, PIC18F97J60, PIC18F87J50, etc.
-    OSCTUNE = 0x40;
-
-    // Set up analog features of PORTA
-
-    // PICDEM.net 2 board has POT on AN2, Temp Sensor on AN3
-    #if defined(PICDEMNET2)
-        ADCON0 = 0x09;        // ADON, Channel 2
-        ADCON1 = 0x0B;        // Vdd/Vss is +/-REF, AN0, AN1, AN2, AN3 are analog
-    #elif defined(PICDEMZ)
-        ADCON0 = 0x81;        // ADON, Channel 0, Fosc/32
-        ADCON1 = 0x0F;        // Vdd/Vss is +/-REF, AN0, AN1, AN2, AN3 are all digital
-    #elif defined(__18F87J11) || defined(_18F87J11) || defined(__18F87J50) || defined(_18F87J50)
-        ADCON0 = 0x01;        // ADON, Channel 0, Vdd/Vss is +/-REF
-        WDTCONbits.ADSHR = 1;
-        ANCON0 = 0xFC;        // AN0 (POT) and AN1 (temp sensor) are anlog
-        ANCON1 = 0xFF;
-        WDTCONbits.ADSHR = 0;        
-    #else
-        ADCON0 = 0x01;        // ADON, Channel 0
-        ADCON1 = 0x0E;        // Vdd/Vss is +/-REF, AN0 is analog
-    #endif
-    ADCON2 = 0xBE;            // Right justify, 20TAD ACQ time, Fosc/64 (~21.0kHz)
-
-
-    // Enable internal PORTB pull-ups
-    INTCON2bits.RBPU = 0;
-
-    // Configure USART
-    TXSTA = 0x20;
-    RCSTA = 0x90;
-
-    // See if we can use the high baud rate setting
-    #if ((GetPeripheralClock()+2*BAUD_RATE)/BAUD_RATE/4 - 1) <= 255
-        SPBRG = (GetPeripheralClock()+2*BAUD_RATE)/BAUD_RATE/4 - 1;
-        TXSTAbits.BRGH = 1;
-    #else    // Use the low baud rate setting
-        SPBRG = (GetPeripheralClock()+8*BAUD_RATE)/BAUD_RATE/16 - 1;
-    #endif
-
-	#ifdef	WEBPAGE_DEMO_SPI
-	SPI_Initialize ();	// SPP
+	//------------
+	// (*a2) Hw ON Board -- LED (*RB4<<__RD0) LED1_IO (RED)
+    __ssdInitLEDs();
+	//------------
+	__ssdInitOnBoardINPUTs();
+	//------------
+	// Serial Flash/SRAM/UART PICtail
+	// (a4) Hw ON Board -- SPIFlash
+#if defined(SPIFLASH_CS_TRIS)
+	//	Below__>>SPIFLASH_CS_IOidle(); //__>>SPIFLASH_CS_IO = 1;
+	//	Below__>>SPIFLASH_CS_TRIS = 0;
+	__ssdInitSPICs();
+	SPIFlashInit();
+#endif
+	// Deassert all chip select lines so there isn't any problem with 
+	// initialization order.  Ex: When ENC28J60 is on SPI2 with Explorer 16, 
+	// MAX3232 ROUT2 pin will drive RF12/U2CTS ENC28J60 CS line asserted, 
+	// preventing proper 25LC256 EEPROM operation.
+	#if defined(EEPROM_CS_TRIS)
+	    EEPROM_CS_IO = 1;
+	    EEPROM_CS_TRIS = 0;
+	#endif
+	#if defined(SPIFLASH_CS_TRIS)
+	    SPIFLASH_CS_IO = 1;
+	    SPIFLASH_CS_TRIS = 0;
 	#endif
 
-    // Enable Interrupts
-    RCONbits.IPEN = 1;        // Enable interrupt priorities
-    INTCONbits.GIEH = 1;
-    INTCONbits.GIEL = 1;
-
-    // Do a calibration A/D conversion
-    #if defined(__18F87J10) || defined(__18F86J15) || defined(__18F86J10) || defined(__18F85J15) || defined(__18F85J10) || defined(__18F67J10) || defined(__18F66J15) || defined(__18F66J10) || defined(__18F65J15) || defined(__18F65J10) || defined(__18F97J60) || defined(__18F96J65) || defined(__18F96J60) || defined(__18F87J60) || defined(__18F86J65) || defined(__18F86J60) || defined(__18F67J60) || defined(__18F66J65) || defined(__18F66J60) || \
-         defined(_18F87J10) ||  defined(_18F86J15) || defined(_18F86J10)  ||  defined(_18F85J15) ||  defined(_18F85J10) ||  defined(_18F67J10) ||  defined(_18F66J15) ||  defined(_18F66J10) ||  defined(_18F65J15) ||  defined(_18F65J10) ||  defined(_18F97J60) ||  defined(_18F96J65) ||  defined(_18F96J60) ||  defined(_18F87J60) ||  defined(_18F86J65) ||  defined(_18F86J60) ||  defined(_18F67J60) ||  defined(_18F66J65) ||  defined(_18F66J60)
-        ADCON0bits.ADCAL = 1;
-        ADCON0bits.GO = 1;
-        while(ADCON0bits.GO);
-        ADCON0bits.ADCAL = 0;
-    #elif defined(__18F87J11) || defined(__18F86J16) || defined(__18F86J11) || defined(__18F67J11) || defined(__18F66J16) || defined(__18F66J11) || \
-           defined(_18F87J11) ||  defined(_18F86J16) ||  defined(_18F86J11) ||  defined(_18F67J11) ||  defined(_18F66J16) ||  defined(_18F66J11) || \
-          defined(__18F87J50) || defined(__18F86J55) || defined(__18F86J50) || defined(__18F67J50) || defined(__18F66J55) || defined(__18F66J50) || \
-           defined(_18F87J50) ||  defined(_18F86J55) ||  defined(_18F86J50) ||  defined(_18F67J50) ||  defined(_18F66J55) ||  defined(_18F66J50)
-        ADCON1bits.ADCAL = 1;
-        ADCON0bits.GO = 1;
-        while(ADCON0bits.GO);
-        ADCON1bits.ADCAL = 0;
-    #endif
-#endif
-
-// Deassert all chip select lines so there isn't any problem with 
-// initialization order.  Ex: When ENC28J60 is on SPI2 with Explorer 16, 
-// MAX3232 ROUT2 pin will drive RF12/U2CTS ENC28J60 CS line asserted, 
-// preventing proper 25LC256 EEPROM operation.
-#if defined(EEPROM_CS_TRIS)
-    EEPROM_CS_IO = 1;
-    EEPROM_CS_TRIS = 0;
-#endif
-#if defined(SPIRAM_CS_TRIS)
-    SPIRAM_CS_IO = 1;
-    SPIRAM_CS_TRIS = 0;
-#endif
-#if defined(SPIFLASH_CS_TRIS)
-    SPIFLASH_CS_IO = 1;
-    SPIFLASH_CS_TRIS = 0;
-#endif
-
-#if defined(SPIRAM_CS_TRIS)
-    SPIRAMInit();
-#endif
-#if defined(EEPROM_CS_TRIS)
-    XEEInit();
-#endif
-#if defined(SPIFLASH_CS_TRIS)
-    SPIFlashInit();
-#endif
+	#if defined(SPIFLASH_CS_TRIS)
+	    SPIFlashInit();
+	#endif
 }
 
 /*********************************************************************

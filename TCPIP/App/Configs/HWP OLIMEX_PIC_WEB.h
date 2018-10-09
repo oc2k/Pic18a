@@ -101,7 +101,8 @@
 
 // PIC-Web uses ATMEL flash AT45DB011, so the file SPIFlash.c and SPIFlash.h are patched to use
 // functions according description in the datasheet of the memory: http://www.atmel.com/Images/doc1123.pdf
-#define	USE_ATMEL_FLASH
+	#define	USE_ATMEL_FLASH
+	#define __dwSPIMemParamSTARTAddr		(DWORD)0x0001FF00 //__/0x000000(00)
 // Olimex applications
 #define	WEBPAGE_DEMO_UART
 #define	WEBPAGE_DEMO_I2C
@@ -113,8 +114,8 @@
 // I/O pins
 #define LED0_TRIS			(PRODL)	/* NC */
 #define LED0_IO				(PRODL)	/* NC */
-#define LED1_TRIS			(TRISBbits.TRISB4)
-#define LED1_IO				(LATBbits.LATB4)
+//--LED1_..
+//--LED1_..
 #define LED2_TRIS			(PRODL)
 #define LED2_IO				(PRODL)
 #define LED3_TRIS			(PRODL)
@@ -131,8 +132,8 @@
 #define LED_PUT(a)			(LED1_IO = (a))
 
 // Buttons
-#define BUTTON0_TRIS		(TRISBbits.TRISB0)
-#define	BUTTON0_IO			(PORTBbits.RB0)
+//--BUTTON0_..
+//--BUTTON0_..
 #define BUTTON1_TRIS		(PRODL)
 #define	BUTTON1_IO			1
 #define BUTTON2_TRIS		(PRODL)
@@ -154,6 +155,69 @@
 #define SPIFLASH_SPICON2		(SSP1CON2)
 #define SPIFLASH_SPISTAT		(SSP1STAT)
 #define SPIFLASH_SPISTATbits	(SSP1STATbits)
+
+// Pre.Keyword: Hw, Is/Isnot, IsHw, ..
+// Post.Keyword: PIN, Toggle, ACT(ie:ACTIVE) / IDLE, ASSERT / DEASSERT, Hi / Lo ..
+// ONBOARD_IO List:
+//		1. WDI i(RD2)
+//		2. LED o(RB4<<__RD1)
+//		3. BUT,SW i(RB0, RF1,2,3,4)
+//		4. SPI o(RF7, RC3,5), i(RC4)
+//		5. USART o(RC6), i(RC7)
+// (a1) Hw ON Board -- WDI
+// (a2) Hw ON Board -- LED
+// (a3) Hw ON Board -- BUTTON, SWITCH (INPUT is DEFAULT)
+// (a4) Hw ON Board -- SPIFlash
+
+//------------
+// (a1) Hw ON Board -- WATCHDOG Pin __>>#define mInitWDI()			TRISD &= 0b11111011; // (1.3) osSKELETON.h >> 
+#define __ssdInitWDI() \
+			WDI_TRIS = 0;
+//O
+//-----WDI_IO------------------------------
+#define WDI_TRIS			(TRISDbits.TRISD2)
+#define WDI_IO				LATDbits.LATD2
+#define WDI_IOtoggle 		WDI_IO ^= 1; //__>>HwWdtPIN = !HwWdtPIN; // osSKELETON.h >> 
+#define __CLRWDTWDI_IOtoggle()	\
+			__CLRWDT();			\
+			WDI_IOtoggle;		// (1) main; (2)  (close) Sw WDT and Hw WDI Togger;
+
+//-----HwWdtPIN------------------------------
+
+//------------
+// LEDs
+// (*a2) Hw ON Board -- LED (__RD0) LED1_IO (RED)
+#define __ssdInitLEDs() \
+			LED1_IOoff();\
+			LED1_TRIS = 0;
+//O
+// ----=LATD1=----LED1_IO---------__>>EncCS_EXP
+	#define LED1_TRIS			(TRISDbits.TRISD1)
+	#define LED1_IO				(LATDbits.LATD1)
+	#define LED1_IOon() 		LED1_IO = 0;
+	#define LED1_IOoff() 		LED1_IO = 1;
+// Buttons
+// (a3) Hw ON Board -- BUTTON, SWITCH (INPUT is DEFAULT)
+// --==--
+#define __ssdInitOnBoardINPUTs()\
+			BUTTON0_TRIS = 1;
+//I
+// ----=RB0=----=BUTTON0=-- 
+	#define BUTTON0_TRIS		(TRISBbits.TRISB0)
+	#define BUTTON0_IO			(PORTBbits.RB0)
+	#define IsON_BUTTON0		(BUTTON0_IO == 0u)
+	#define IsOFF_BUTTON0		(BUTTON0_IO)
+// Serial Flash/SRAM/UART PICtail
+// (a4) Hw ON Board -- SPIFlash
+// ----=LATF7=#CS--==--SPIFLASH_CS_IO
+#define __ssdInitSPICs()\
+			SPIFLASH_CS_IOidle();\
+			SPIFLASH_CS_TRIS = 0;
+//SPI
+#define SPIFLASH_CS_TRIS		(TRISFbits.TRISF7)
+#define SPIFLASH_CS_IO			(LATFbits.LATF7)
+#define SPIFLASH_CS_IOact()		SPIFLASH_CS_IO = 0; // osSKELETON.h >> 
+#define SPIFLASH_CS_IOidle() 		SPIFLASH_CS_IO = 1; // osSKELETON.h >> 
 
 // UART mapping functions for consistent API names across 8-bit and 16 or 
 // 32 bit compilers.  For simplicity, everything will use "UART" instead 
@@ -218,4 +282,5 @@
 #define __TBLWTPOSTDEC() {_asm tblwtpostdec _endasm}
 #define __TBLWTPREINC() {_asm tblwtpreinc _endasm}
 //----------------------------------- update in 140402a
-#endif // #ifndef HARDWARE_PROFILE_H
+
+#endif

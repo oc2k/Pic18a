@@ -65,8 +65,99 @@
 #define __UINT32Size				sizeof(UINT32) //__>>4
 //-----------------------------------
 
-	extern BYTE u8i;
+		extern BYTE u8i;
+		extern BYTE u8j;
+		extern BYTE u8k;
+		extern BYTE u8retVAL;
+		extern WORD u16i;
+		extern DWORD u32i;
+		extern BYTE w8i;
+		extern BYTE w8j;
+		extern BYTE w8s;
+		extern BYTE w8t;
+		extern WORD w16i;
+		extern WORD w16j;
+		extern DWORD w32i;
 
+	// Re-definitions function temp REGs 
+	// ------------
+#define __u8iB6 (((BYTE_VAL*)&u8i)->bits.b6)
+#define __u8retVALB7 (((BYTE_VAL*)&u8retVAL)->bits.b7)
+#define __u8retVALB0 (((BYTE_VAL*)&u8retVAL)->bits.b0)
+#define __u8sB7 (((BYTE_VAL*)&u8s)->bits.b7)
+#define __u8sB0 (((BYTE_VAL*)&u8s)->bits.b0)
+	// ------------
+#define __u16iHB	(((WORD_VAL*)&u16i)->byte.HB)
+#define __u16iLB	(((WORD_VAL*)&u16i)->byte.LB)
+#define __u16iB15	(((WORD_VAL*)&u16i)->bits.b15)
+#define __u16iB11	(((WORD_VAL*)&u16i)->bits.b11)
+#define __u16iB9	(((WORD_VAL*)&u16i)->bits.b9)
+#define __u16iB0	(((WORD_VAL*)&u16i)->bits.b0)
+#define u16j	(((DWORD_VAL*)&u32i)->word.LW)
+#define u16k	(((DWORD_VAL*)&u32i)->word.HW)
+		// ------------
+#define __u32iMB	(((DWORD_VAL*)&u32i)->byte.MB) //__>>(u32i.fcun[3].value)
+#define __u32iUB	(((DWORD_VAL*)&u32i)->byte.UB) //__>>(u32i.fcun[2].value)
+#define __u32iHB	(((DWORD_VAL*)&u32i)->byte.HB) //__>>(u32i.fcun[1].value)
+#define __u32iLB	(((DWORD_VAL*)&u32i)->byte.LB) //__>>(u32i.fcun[0].value)
+		// ------------
+	#define __u32iFUNval	(((FUN*)&u32i)->val) //__>>(u32i.Val) xxx__>>((LONG*)&u32i) <<_xxx
+		// ------------
+	// ------------=u32i=--
+	// ----------------=u32j=--
+	// ----------------=u32j=--
+	//-----------------------------------
+	#define __w8iB7	(((BYTE_VAL*)&w8i)->bits.b7)
+	#define __w8iB0	(((BYTE_VAL*)&w8i)->bits.b0)
+	// ----------------=word16i=--
+	#define __w16iB15	(((WORD_VAL*)&w16i)->bits.b15)
+	#define __w16iB11	(((WORD_VAL*)&w16i)->bits.b11)
+	#define __w16iB9	(((WORD_VAL*)&w16i)->bits.b9)
+	#define __w16iB0	(((WORD_VAL*)&w16i)->bits.b0)
+		// ------------
+		#define __w16iHB	(((WORD_VAL*)&w16i)->byte.HB)
+		#define __w16iLB	(((WORD_VAL*)&w16i)->byte.LB)
+		// ------------
+	// ----------------=word16i=--
+	//
+	//------- ---------------------=word32i=--
+	#define __w32iB31	(((DWORD_VAL*)&w32i)->bits.b31)
+	#define __w32iB0	(((DWORD_VAL*)&w32i)->bits.b0)
+		#define __w32iHW	(((DWORD_VAL*)&w32i)->word.HW)
+		#define __w32iLW	(((DWORD_VAL*)&w32i)->word.LW)
+	#define __w32iMB	(((DWORD_VAL*)&w32i)->byte.MB)
+	#define __w32iUB	(((DWORD_VAL*)&w32i)->byte.UB)
+	#define __w32iHB	(((DWORD_VAL*)&w32i)->byte.HB)
+	#define __w32iLB	(((DWORD_VAL*)&w32i)->byte.LB)
+	//------- ---------------------=word32i=--
+	// -----=OsCLOCKs=-----------------------------------------------------------------------------------------------
+#define __hmSecondB2 (((BYTE_VAL*)&hmSecond)->bits.b2)
+#define __oSecondB1 (((BYTE_VAL*)&oSecond)->bits.b1)
+	// -----=OsCLOCKs=-----------------------------------------------------------------------------------------------
+		// ----------------------=LKZDdsa908ad90lk=---------------------------------------------------
+	
+		extern BYTE sys,sys2,sys5,sys6,sys7;//__>>,sys3; //and sys4 as tempoary testing use
+		extern BYTE isrMs,isrHms;
+		extern BYTE hmSecond, oSecond, oMinute, oHour;
+		extern WORD sysErr; //system error BITs as reporting
+	// ----------------------------------------------------------------------------------------------------
+	// -ssdInitREGs
+	// -----------==--------------------------
+#define sysCLEAR() 				(sys = sys2 = sys5 = sys6 = sys7 = 0) //__>> = sys3 = 0) //tmp__>> = 0) // as initial OR Reset
+#define __initOsCLOCKs()		\
+				hmSecond	=		\
+				oSecond 	=		\
+				oMinute 	=		\
+				oHour		=		\
+				isrHms		=		\
+				isrMs		= 0;	// Clear internal system clock value
+	//--------------------
+	// osPUBLIC.h >> ssdInitOsREGs();
+#define ssdInitOsREGs()			\
+				sysERRClear();		\
+				sysCLEAR(); 		\
+				__initOsCLOCKs();
+	/* -----------==--------------------------*/
 // ----------------
 typedef struct _Pic18RomSystemPPRWParam //Rev01b__>>_Pic18RomSystemRWParam
 {
@@ -89,6 +180,8 @@ typedef union Pic18RomSystemPIRWParamTAG{ //Rev01b__>>Pic18RomSystemRWParamTAG{
 } RomUNsysPPRWParam;
 	extern	ROM RomUNsysPPRWParam Pic18RomSysPPnnParam;
 //----------------------------89293475ljadlj9409b--------------------------------------
+// ----------------------------------------------
+// ----------------
 typedef struct _Pic18RomSystemROParam
 {
 	DWORD dSysROAddressID;	// __rom00,01,02,03,SystemReadONLYAddressID,
@@ -162,5 +255,6 @@ typedef union Pic18RomAppCONFIGROTAG{
 //	vv
 
 	void aGenSystemClock(void);
+	void isrOsSystemCLOCK(void);
 
 #endif

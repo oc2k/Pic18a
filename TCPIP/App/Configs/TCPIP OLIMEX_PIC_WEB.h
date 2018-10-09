@@ -61,6 +61,10 @@
  *   Uncomment or comment the following lines to enable or
  *   disabled the following high-level application modules.
  */
+// -- (NEW)
+//NewTask_/#define STACK_USE_HAL_A2D			//(NEW) Activate "HalA2D.h"
+//NewTask_/#define STACK_USE_HAL_SCI_UART		//(NEW) Activate "HalSCI.h"
+
 #define STACK_USE_UART					// Application demo using UART for IP address display and stack configuration
 #define STACK_USE_UART2TCP_BRIDGE		// UART to TCP Bridge application example
 //181004a1PermanenceDelete_/#define STACK_USE_IP_GLEANING

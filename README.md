@@ -1,4 +1,4 @@
-Pic18a1(f67j60)TCPIP__180923b
+Pic18a1(f67j60)TCPIP__181007a
 ====
 ##### recoder (TOP LATEST)
 
@@ -10,41 +10,15 @@ Pic18a1(f67j60)TCPIP__180923b
 #### new tasks
 *
 * new task v: halSCI </br>
-* new task v: halA2D </br>
 *
 
 ---------------
 ## processing task
-- 181008a2, clear InitializeBoard code as prepare add hal basic code
-- 181008a1, add basic code into ssdC18Init (c,h)
-- 181008a, PURPOSE: clear main.c code
+- 181009a, PURPOSE: add/set halA2D (c,h)
 #### done record
-- - 181007a3, added ssdC18Init (c,h) as C18 start/shutdown initial code
-- - 181007a2, as defination project fixed RAM/ROM parameter and settle appconf structure from main.c
-- - 181007a1, added genSKEL (c,h) -- note: compiler is not accepted blank c file, thus added u8i variable as new data temporary
+- - 181008a, PURPOSE: clear main.c code (master branch can be do it)
 - - 181007a, PURPOSE: added genSKEL (c,h) and define project fixed RAM/ROM parameter defines
-- - 181006a7, it is confirm to use **STACK_USE_TCP** due to define *STACK_USE_UART2TCP_BRIDGE* see TCPIP.h
-- - 181006a6, remove STACK_USE_RSA_ENCRYPT and relevant (STACK_USE_RSA,STACK_USE_BIGINT)
-- - 181006a5, remove STACK_USE_SSL (permanence delete STACK_USE_HTTP_MD5_DEMO) in config and relevant STACK_USE_ARCFOUR,STACK_USE_MD5,STACK_USE_SHA1,STACK_USE_RANDOM
-- - 181006a4, remove PIC24FJ64GA004_PIM,DSPICDEM11
-- - 181006a3, remove DERIVE_KEY_FROM_PASSPHRASE_IN_HOST, ENC_CS_TRIS, ENC100_CS_TRIS and ENC100_INTERFACE_MODE
-- - 181006a2, remove USE_LCD (include LCD_DATA_IO, LCD_DATA0_IO,..)
-- - 181006a1, remove Wifi no use code (WF_CS_TRIS) and relevant WF_MODULE_NUMBER, STACK_USE_AUTOUPDATE_HTTPSERVER defines
-- - from 181003 to 181004: see below permanent remove list
-- - 181001a4, remove __C32**,__PIC24**,__PIC32
-- - 181001a3, remove __C30**
-- - 181001a2, remove HI_TECH_C
-- - 181001a1, remove "CFG_INCLUDE_PICDN2_ETH97" in mcp, output hex file no change
--
-- - copy processing </br>
-- - 180920a2, to remove PingDemo.c </br>
-- - 180920a1, to remove delay.c and DNSs.c </br>
-- - 180918a, update c018i startup code instead of c018oc2k </br>
-- - 180917a remove debug*,StructQueue*,timeDelay*,timer*, DynDNS*, FTP*, Hashes*, MPFS2* and regdef*, SPIRAM* and SPIEEPROM* </br>
-- - 180914a,change maindemo to main (c,h) and remove BitInt* </br>
-- - 180913a,remove smtp* (c,h); DHCP* (c,h) and AutoIP (c,h); HTTP* (c,h); ICMP_SERVER and no deleted is same, thus resume; FileSystem (c,h), MPFS2 (c,h), SNMP (c,h); TFTPc (c,h) -- that is Trivial File Transfer Protocol (TFTP) Client; ENCX24J600 (c,h) and more files </br>
-- - 180912b,remove WF* (c,h) -- "WF_CS_TRIS"; Zeroconf* (c,h); ETHPIC32*.* (pic32 library file); </br>
-- - ... </br>
+- - 181006a, it is confirm to use **STACK_USE_TCP** due to define *STACK_USE_UART2TCP_BRIDGE* see TCPIP.h
 -
 - permanent remove list
 	----
@@ -55,7 +29,7 @@ Pic18a1(f67j60)TCPIP__180923b
 	| __PIC32*|Processed|exclude compiler.h
 	| __dsPIC33*|Processed|exclude compiler.h
 	| STACK_USE_MPFS2|181003a1PermanenceDelete|Keep uncomment permanence delete in TCPIP ***.h
-	| STACK_USE_HTTP2_SERVER|181003b1PermanenceDelete|Keep uncomment permanence delete in TCPIP ***.h and undef HTTP_**
+	| STACK_USE_HTTP2_SERVER|181003b1PermanenceDelete|Keep uncomment permanence delete in TCPIP ***.h and undef HTTP_..
 	| STACK_USE_DHCP_SERVER|181003c1PermanenceDelete|see above
 	| STACK_USE_DHCP_CLIENT|181003c2PermanenceDelete|see above
 	| STACK_USE_AUTO_IP|181003d1PermanenceDelete|see above
@@ -106,7 +80,7 @@ Pic18a1(f67j60)TCPIP__180923b
 
 ----
 >
-> (branch:tcplite)
+> (branch:tcplite) deleted
 >
 
 
@@ -117,7 +91,7 @@ Pic18a1(f67j60)TCPIP__180923b
 
 ----
 >
-> (branch:master)
+> (branch:master) keeping
 >
 
 ----

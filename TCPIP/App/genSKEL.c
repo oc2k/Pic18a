@@ -64,9 +64,24 @@
 
 #pragma udata 
 	BYTE u8i;
+	BYTE u8j;
+	BYTE u8k;
+	BYTE u8retVAL;
+	WORD u16i;
+	DWORD u32i;
 
-//for example_/static UDP_SOCKET MySocket = INVALID_UDP_SOCKET; // UDP socket to use for DNS queries
+	BYTE w8i;
+	BYTE w8j;
+	BYTE w8s;
+	BYTE w8t;
+	WORD w16i;
+	WORD w16j;
+	DWORD w32i;
 
+	BYTE sys,sys2,sys5,sys6,sys7;
+	BYTE isrMs,isrHms;
+	BYTE hmSecond, oSecond, oMinute, oHour;
+	WORD sysErr; //system error code as reporting
 // -----------=89293475ljadlj9409aRW=----------------------------------------------------
 #pragma romdata rombankRW=__constPIC18F67J60_RWProgMemStartPTR //0x10000-0x10400 as erase AREA
 ROM RomUNsysPPRWParam Pic18RomSysPPnnParam =
@@ -159,13 +174,13 @@ ROM BYTE SerializedMACAddressRO[6] = {MY_DEFAULT_MAC_BYTE1, MY_DEFAULT_MAC_BYTE2
 
 /*****************************************************************************
   Function:
-	None
+	aGenSystemClock
 
   Summary:
 	None
 	
   Description:
-	None
+	normal clock process
 
   Precondition:
 	None
@@ -179,9 +194,131 @@ ROM BYTE SerializedMACAddressRO[6] = {MY_DEFAULT_MAC_BYTE1, MY_DEFAULT_MAC_BYTE2
   Remarks:
 	None
   ***************************************************************************/
-//static BYTE savMs, savHms;
+	static BYTE savMs, savHms;
 void aGenSystemClock(void)
 {
-	__NOP();
+	// -------------------------------------
+	// Key condition
+	// -------------------------------------
+	if(isrMs == savMs) return;
+	savMs = isrMs;
+
+	//////////////////////////////////////////////////
+	// 1 millisecond (Ms)						//
+	//////////////////////////////////////////////////
+	#if defined(STACK_USE_HAL_UART2TCP)
+		__clkstmMsgMSCountdown();
+	#endif //!>>if defined(STACK_USE_HAL_UART2TCP)
+
+	if(savHms == isrHms) 
+return;
+
+	savHms = isrHms;
+	//////////////////////////////////////////////////
+	//Per 100millisecond (Ms)						//
+	//////////////////////////////////////////////////
+	#if defined(STACK_USE_HAL_UART2TCP)
+		__clkTCPHmsCountdown();
+	#endif
+
+	if(++hmSecond > 9)
+	{
+		hmSecond = 0;
+
+		//////////////////////////////////////////
+		//Per 1 Second (Sec)					//
+		//////////////////////////////////////////
+
+		// ======================
+		// To test USB transfer stream by "oSecond"
+		// ======================
+		// --2a__BBBBB-----------------------------------
+		// Per Minute
+		if( ++oSecond >59){
+			oSecond=0;
+
+			//////////////////////////////////
+			//Per 1 minute (Mnt)			//
+			//////////////////////////////////
+			if(++oMinute >119)
+			{
+				oMinute=0;
+
+				//////////////////////
+				//Per 2 Hour (Hr)	//
+				//////////////////////
+				oHour ++; // clocktick FF'''77''3B' (a cycle equal to 21.33333 day)
+
+			}
+			// else rule NOP
+			// -------------------------------------
+
+		}
+		// else rule NOP
+		// -------------------------------------
+
+	}
+	// else rule NOP
+	// -------------------------------------
+	
 }
 
+/*****************************************************************************
+  Function:
+	aGenSystemClock
+
+  Summary:
+	None
+	
+  Description:
+	normal clock process
+
+  Precondition:
+	None
+
+  Parameters:
+	None
+
+  Return Values:
+	None
+  	
+  Remarks:
+	None
+  ***************************************************************************/
+//__
+	void isrOsSystemCLOCK(void)
+	{
+		//----------------------------------------------------------------
+		// .. TIMER1 Interrupt process
+		//------------------------
+		if (PIR1bits.TMR1IF){ // 1Ms timer overflow
+	
+			// -- user AREA --
+			// -- user AREA --
+	
+			// system clock process
+			if(++isrMs > 99)
+			{
+				// system clock process
+				isrMs = 0;
+				isrHms ++; //Per 100ms
+	
+				// -- user AREA --
+				#if defined(STACK_USE_HAL_SCI_UART)
+					// -------------------------------------XXX
+					//	__isrUARTRxIdletmrHMSCountdown();
+					// -------------------------------------XXX
+				#endif //!>>if defined(STACK_USE_HAL_SCI_UART)
+				// -- user AREA --
+	
+			}
+	
+			// system clock process
+			Tmr1Resetting();
+		
+			// ----
+			// Exit
+			// ----
+			PIR1bits.TMR1IF = 0;		//clear interrupt flag
+		}
+	}
